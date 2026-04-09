@@ -1,1 +1,393 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KT 기업상품 견적 시스템 - 최종보정완료</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        /* 기존 스타일 100% 유지 */
+        body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f7f9; color: #333; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        .auth-box { background: white; padding: 35px; border-radius: 15px; text-align: center; border-top: 6px solid #E4002B; width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .auth-box h2 { font-size: 15px; margin-bottom: 20px; color: #333; white-space: nowrap; }
+        .auth-box input { padding: 12px; width: 100%; border: 1px solid #ddd; border-radius: 6px; font-size: 20px; text-align: center; margin-bottom: 15px; box-sizing: border-box; }
+        
+        #mainContent { display: none; }
+        #configSection { max-width: 950px; margin: 15px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid #E4002B; }
+        .config-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .config-group label { font-size: 11px; font-weight: bold; color: #E4002B; display: block; margin-bottom: 4px; }
+        .config-group input, .config-group textarea { padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 13px; }
+        
+        .category-group { margin-top: 15px; border: 1px solid #e1e4e8; border-radius: 10px; overflow: hidden; }
+        .category-header { background: #333; color: white; padding: 12px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .category-content { display: none; padding: 12px; background: #fcfcfc; }
+        .category-content.active { display: block; }
+        
+        .item-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media (min-width: 768px) { .item-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .wifi-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 12px !important; width: 100%; box-sizing: border-box; margin-top: 10px; }
+        @media (min-width: 768px) { .wifi-grid { grid-template-columns: 1fr 1fr !important; } }
+        
+        .item-card { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
+        .item-name { font-weight: bold; border-left: 4px solid #E4002B; padding-left: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .phone-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-grow: 1; }
+        .qty-input-phone { width: 55px !important; height: 32px; border: 1.5px solid #E4002B; padding: 4px; border-radius: 4px; text-align: center; font-weight: bold; font-size: 14px; }
+        .btn-add { background: #E4002B; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; height: 32px; }
+        
+        .stepper { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; height: 32px; flex-shrink: 0; }
+        .stepper button { width: 28px; height: 100%; border: none; background: #f8f9fa; cursor: pointer; }
+        .stepper input { width: 30px; text-align: center; border: none; font-weight: bold; font-size: 13px; }
+
+        .preview-outer { width: 100%; background: #444; padding: 40px 0 160px 0; display: flex; flex-direction: column; align-items: center; }
+        #printWrapper { width: 210mm; display: flex; justify-content: center; transform-origin: top center; position: relative; }
+        #printArea { width: 210mm; min-height: 297mm; background: white; padding: 20mm 15mm; box-sizing: border-box; position: relative; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.6); z-index: 1; }
+        
+        .info-table, .main-table, .memo-table { width: 100%; border-collapse: collapse; border: 1.2px solid #000; table-layout: fixed; }
+        .info-table th, .main-table th { background: #B8CCE4; border: 1.2px solid #000; padding: 8px; text-align: center; font-size: 12px; }
+        
+        .info-table td, .main-table td { 
+            border: 1.2px solid #000; 
+            padding: 5px 8px !important; 
+            text-align: center; 
+            font-size: 12px; 
+            background: rgba(255,255,255,0.7); 
+            height: 32px; 
+            position: relative; 
+            z-index: 2; 
+            letter-spacing: -0.4px; 
+            line-height: 1.4;
+        }
+        
+        .memo-label { background: #B8CCE4; border: 1.2px solid #000; text-align: center; width: 15%; font-weight: bold; font-size: 11px; vertical-align: middle; }
+        .memo-content { border: 1.2px solid #000; padding: 15px 20px; text-align: left; height: 130px; white-space: pre-wrap; font-size: 11px; line-height: 1.8; vertical-align: top; }
+        .total-value-cell { text-align: right !important; padding-right: 20px !important; color: #E4002B; font-size: 1.4em; font-weight: bold; letter-spacing: 0px !important; }
+        
+        .fixed-btn-group { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; background: white; padding: 15px; gap: 15px; z-index: 9999; box-shadow: 0 -5px 20px rgba(0,0,0,0.2); }
+        .btn-footer { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 17px; }
+
+        #out_quote_no { display: inline-block; letter-spacing: 0.5px; font-weight: bold; min-width: 180px; text-align: right; }
+
+        .table-container { position: relative; width: 100%; }
+        .table-watermark { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); width: 350px; opacity: 0.12; z-index: 1; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<!-- 보정 1: 제목을 inno로 변경 -->
+<div id="authOverlay"><div class="auth-box"><h2>inno</h2><input type="password" id="pwInput" placeholder="Password" onkeyup="if(window.event.keyCode==13){checkPW()}"><button class="btn-add" style="width:100%; height:45px; font-size:16px;" onclick="checkPW()">접속하기</button></div></div>
+
+<div id="mainContent">
+    <div id="configSection">
+        <div class="header-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 class="main-title" style="margin:0;"><img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:22px;"> 기업상품 견적</h2>
+        </div>
+        <div class="config-grid">
+            <div class="config-group"><label>수 신</label><input type="text" id="in_client" oninput="sync()"></div>
+            <div class="config-group"><label>고객번호</label><input type="text" id="in_manager" oninput="handlePhone(this); sync()"></div>
+            <!-- 보정 2: 판매담당을 공란으로 비우고 readonly 제거 -->
+            <div class="config-group"><label>판매담당</label><input type="text" id="in_sales" oninput="sync()" placeholder="담당자 성함 입력"></div>
+            <div class="config-group"><label>판매번호</label><input type="text" id="in_phone" value="010-2429-7805" oninput="sync()"></div>
+            <div class="config-group"><label>FAX</label><input type="text" id="in_fax" oninput="handlePhone(this); sync()"></div>
+            <div class="config-group"><label>견적일</label><input type="date" id="in_date" oninput="sync()"></div>
+        </div>
+        <div class="config-group" style="margin-top:10px;">
+            <label>조건 및 안내사항</label>
+            <textarea id="in_memo" oninput="sync()" style="height:120px;">* 개소의 유동성으로 인터넷 개수가 추가 또는 축소 될 수 있습니다.
+* 센트릭스는 각 부가팩 포함입니다.
+* FAX 상품은 제외입니다.
+* 무선전화기 22,000원 별도 구매
+* 해당 안내금액은 부가세(VAT) 별도 입니다</textarea>
+        </div>
+        <div id="product-lists"></div>
+    </div>
+
+    <div class="preview-outer">
+        <div id="printWrapper">
+            <div id="printArea">
+                <div style="text-align:right; font-size:10px; font-weight:bold; margin-bottom:8px;">견적번호: <span id="out_quote_no"></span></div>
+                <div style="text-align:center; border-bottom:3.5px solid #333; margin-bottom:15px; padding-bottom:10px;">
+                    <h1 style="font-size:2.0em; font-weight:900; margin:0; display:flex; align-items:center; justify-content:center; gap:15px;"><img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:1.2em;"> 기업상품 견적서</h1>
+                </div>
+                <table class="info-table">
+                    <tr><th style="width:15%">수 신</th><td id="out_client" style="width:35%"></td><th style="width:15%">고객번호</th><td id="out_manager" style="width:35%"></td></tr>
+                    <!-- 보정 3: 판매담당 출력을 in_sales와 연동하기 위해 id 부여 -->
+                    <tr><th>판매담당</th><td id="out_sales"></td><th>판매번호</th><td id="out_phone">010-2429-7805</td></tr>
+                    <tr><th>FAX</th><td id="out_fax"></td><th>유효기간</th><td>견적일로부터 1일</td></tr>
+                    <tr><th>견적일</th><td id="out_date"></td><th>비고</th><td id="out_extra_note"></td></tr>
+                </table>
+                <div class="table-container">
+                    <img src="01_KT%20Wordmark%20(Standard)_01.png" class="table-watermark">
+                    <table class="main-table">
+                        <thead><tr><th style="width:5%">#</th><th style="width:35%">상품 및 서비스</th><th style="width:7%">수량</th><th style="width:13%">단 가</th><th style="width:13%">할인액</th><th style="width:13%">요 금</th><th style="width:14%">비 고</th></tr></thead>
+                        <tbody id="quoteBody"></tbody>
+                        <tr style="height:45px;"><td colspan="3" style="background:#fff; border:none;"></td><td style="background:#B8CCE4; border:1.2px solid #000; font-weight:bold;">총 합계요금</td><td colspan="3" id="finalAmt" class="total-value-cell" style="border:1.2px solid #000;">0</td></tr>
+                    </table>
+                </div>
+                <div style="height: 40px;"></div> 
+                <table class="memo-table"><tr><td class="memo-label">조건<br>및<br>안내사항</td><td id="out_memo" class="memo-content"></td></tr></table>
+            </div>
+        </div>
+    </div>
+    <!-- 보정 4: 이미지 저장 버튼 옆에 메시지 전송 버튼 추가 -->
+    <div class="fixed-btn-group">
+        <button class="btn-footer" style="background: #E4002B;" onclick="saveImage()">📸 이미지 저장</button>
+        <button class="btn-footer" style="background: #007AFF;" onclick="sendSMS()">💬 메시지 전송</button>
+        <button class="btn-footer" style="background: #333;" onclick="window.print()">🖨️ 인쇄 / PDF</button>
+    </div>
+</div>
+
+<script>
+    function checkPW() {
+        if(document.getElementById('pwInput').value === '7805') {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            init(); syncMobileScale();
+        } else { alert('비밀번호가 틀렸습니다.'); document.getElementById('pwInput').value = ''; }
+    }
+
+    // 보정 5: 메시지 전송 함수 추가 (기존 로직 영향 없음)
+    function sendSMS() {
+        const phone = document.getElementById('in_manager').value;
+        if(!phone) { alert("고객번호(전화번호)를 먼저 입력해주세요."); return; }
+        window.location.href = `sms:${phone}`;
+    }
+
+    function syncMobileScale() {
+        const wrap = document.getElementById('printWrapper');
+        const width = window.innerWidth;
+        if(width < 850) {
+            const scale = (width - 40) / 850;
+            wrap.style.transform = `scale(${scale})`;
+            document.querySelector('.preview-outer').style.height = (document.getElementById('printArea').offsetHeight * scale) + 150 + "px";
+        } else { wrap.style.transform = 'none'; document.querySelector('.preview-outer').style.height = "auto"; }
+    }
+    window.addEventListener('resize', syncMobileScale);
+
+    /* 기존 prodData 및 cats 로직 100% 동일 유지 */
+    const prodData = {
+        "인터넷 _슬림(100MB)": { before: 22000, comm: 10000 },
+        "인터넷 _슬림플러스(200MB)": { before: 27500, comm: 30000 },
+        "인터넷 _베이직(500MB)": { before: 30000, comm: 80000 },
+        "인터넷 _에센스(1GB)": { before: 35000, comm: 120000 },
+        "오피스넷 _슬림(100MB)": { before: 28000, comm: 140000 },
+        "오피스넷 _베이직(500MB)": { before: 40000, comm: 200000 },
+        "오피스넷 _에센스(1GB)": { before: 45000, comm: 210000 },
+        "KT WIFI": { before: 3000, disc: -2000, final: 1000 },
+        "KT Giga WIFI": { before: 3000, disc: -3000, final: 0 },
+        "패밀리 인터넷 슬림": { before: 20000, final: 15000, comm: 0 },
+        "패밀리 인터넷 베이직": { before: 30000, final: 20000, comm: 10000 },
+        "패밀리 인터넷 에센스": { before: 35000, final: 25000, comm: 10000 },
+        "신규(070회선)": { comm: 30000 }, "타사탈환(종량제)": { comm: 40000 }, "자사번동": { comm: 0 }, "원스톱전환신규": { comm: 80000 },
+        "종량제": { final: 3000, comm: 0 },
+        "유무선 30": { final: 4000, comm: 10000 },
+        "유무선 50": { final: 5000, comm: 10000 },
+        "유무선 70": { final: 6000, comm: 70000 },
+        "유무선 100": { final: 8000, comm: 90000 },
+        "유무선 150": { final: 10000, comm: 90000 },
+        "유무선 250": { final: 12000, comm: 100000 },
+        "유무선 300": { final: 15000, comm: 100000 },
+        "유무선 400": { final: 17000, comm: 100000 },
+        "유무선 550": { final: 22000, comm: 120000 },
+        "유무선 600": { final: 30000, comm: 120000 },
+        "유무선 1700": { final: 50000, comm: 120000 },
+        "지니 TV 베이직": { before: 14000, disc: 0, final: 14000, comm: 10000 },
+        "지니 TV 베이직 추가회선": { before: 6700, final: 6700, comm: 10000 },
+        "지니 TV 에센스": { before: 17000, disc: -4000, final: 13000, comm: 30000 },
+        "지니 TV 에센스 추가회선": { before: 8000, final: 8000, comm: 20000 },
+        "지니 TV 모든G": { before: 18000, disc: -4000, final: 14000, comm: 100000 },
+        "지니 TV 모든G 추가회선": { before: 18000, disc: -4000, final: 14000, comm: 80000 },
+        "지니 a stb": { before: 0, disc: 3000, final: 3000, comm: 0 },
+        "오피스에센스 고정IP": { before: 50000, disc: -5000, final: 45000, comm: 100000 },
+        "오피스베이직 고정IP": { before: 45000, disc: -4000, final: 41000, comm: 100000 },
+        "오피스슬림 고정IP": { before: 30000, disc: -2000, final: 28000, comm: 80000 },
+        "BIZTV_슬림": { before: 14000, disc: -4000, final: 10000, comm: 120000 },
+        "BIZTV_슬림_추가회선": { before: 10000, disc: -4000, final: 6000, comm: 120000 },
+        "BIZTV_베이직": { before: 15000, disc: -4000, final: 11000, comm: 160000 },
+        "BIZTV_베이직_추가회선": { before: 10700, disc: -4000, final: 6700, comm: 160000 },
+        "BIZTV_라이트↑": { before: 16000, disc: -4000, final: 12000, comm: 180000 },
+        "BIZTV_라이트↑_추가회선": { before: 11200, disc: -4000, final: 7200, comm: 180000 },
+        "통화매니저": { final: 4000, comm: 0 },
+        "통화매니저 녹취": { final: 6000, comm: 0 },
+        "링고비즈": { final: 2000, comm: 0 },
+        "전국대표번호": { final: 14000, comm: 0 },
+        "ars": { final: 10000, comm: 0 }
+    };
+
+    const cats = {
+        "인터넷/오피스넷": ["인터넷 _슬림(100MB)", "인터넷 _슬림플러스(200MB)", "인터넷 _베이직(500MB)", "인터넷 _에센스(1GB)", "오피스넷 _슬림(100MB)", "오피스넷 _베이직(500MB)", "오피스넷 _에센스(1GB)", "KT Giga WIFI", "KT WIFI"],
+        "패밀리 인터넷": ["패밀리 인터넷 슬림", "패밀리 인터넷 베이직", "패밀리 인터넷 에센스"],
+        "가입유형": ["신규(070회선)", "타사탈환(종량제)", "자사번동", "원스톱전환신규"],
+        "전화 요금제": ["종량제", "유무선 30", "유무선 50", "유무선 70", "유무선 100", "유무선 150", "유무선 250", "유무선 300", "유무선 400", "유무선 550", "유무선 600", "유무선 1700"],
+        "TV": ["지니 TV 베이직", "지니 TV 베이직 추가회선", "지니 TV 에센스", "지니 TV 에센스 추가회선", "지니 TV 모든G", "지니 TV 모든G 추가회선", "지니 a stb"],
+        "TV BIZ": ["BIZTV_슬림", "BIZTV_슬림_추가회선", "BIZTV_베이직", "BIZTV_베이직_추가회선", "BIZTV_라이트↑", "BIZTV_라이트↑_추가회선"],
+        "고정아이피": ["오피스에센스 고정IP", "오피스베이직 고정IP", "오피스슬림 고정IP"],
+        "부가서비스": ["통화매니저", "통화매니저 녹취", "링고비즈", "전국대표번호", "ars"]
+    };
+
+    let cart = [];
+    function init() {
+        const wrap = document.getElementById('product-lists'); wrap.innerHTML = '';
+        for (let c in cats) {
+            let div = document.createElement('div'); div.className = 'category-group';
+            div.innerHTML = `<div class="category-header"><span onclick="toggleCat(this)">■ ${c}</span><button onclick="resetCat('${c}')" style="background:#fff; border:1px solid #ddd; padding:2px 8px; border-radius:4px; font-size:10px; cursor:pointer;">리셋</button></div>
+                             <div class="category-content active"></div>`;
+            const content = div.querySelector('.category-content');
+            if (c === "인터넷/오피스넷") {
+                const itemGrid = document.createElement('div');
+                itemGrid.className = 'item-grid';
+                const normalItems = cats[c].filter(name => !name.includes("WIFI"));
+                normalItems.forEach(name => { itemGrid.innerHTML += createCardHtml(c, name); });
+                content.appendChild(itemGrid);
+                const wifiGrid = document.createElement('div');
+                wifiGrid.className = 'wifi-grid';
+                const wifiItems = cats[c].filter(name => name.includes("WIFI"));
+                wifiItems.forEach(name => { wifiGrid.innerHTML += createCardHtml(c, name); });
+                content.appendChild(wifiGrid);
+            } else {
+                const itemGrid = document.createElement('div');
+                itemGrid.className = 'item-grid';
+                cats[c].forEach(name => { itemGrid.innerHTML += createCardHtml(c, name); });
+                content.appendChild(itemGrid);
+            }
+            wrap.appendChild(div);
+        }
+        document.getElementById('in_date').value = new Date().toISOString().substring(0, 10); sync();
+    }
+
+    function createCardHtml(c, name) {
+        let h = `<div class="item-card" data-cat="${c}" data-prod="${name}"><span class="item-name">${name}</span>`;
+        if(c === "전화 요금제") {
+            h += `<div class="phone-row"><div class="phone-selector"><label><input type="radio" name="p_${name}" value="100M" checked> 100M</label><label><input type="radio" name="p_${name}" value="1G"> 1G</label></div><div class="phone-qty-container"><input type="number" class="qty-input-phone" value="0" placeholder="수량"><button class="btn-add" onclick="addToCart('${name}', this)">적용</button></div></div>`;
+        } else {
+            h += `<div class="stepper"><button onclick="qty(this,-1)">-</button><input type="text" value="0" data-name="${name}" readonly><button onclick="qty(this,1)">+</button></div><div class="note-box"><div class="note-label">비고:</div><input type="text" class="note" oninput="updateTable()"></div>`;
+        }
+        return h + `</div>`;
+    }
+
+    function toggleCat(el) { el.parentElement.nextElementSibling.classList.toggle('active'); }
+    function resetCat(cN) {
+        if(cN === "전화 요금제") cart = [];
+        document.querySelectorAll(`.item-card[data-cat="${cN}"] input[type="text"], .item-card[data-cat="${cN}"] input[type="number"]`).forEach(i => i.value=0);
+        document.querySelectorAll(`.item-card[data-cat="${cN}"] .note`).forEach(n => n.value='');
+        updateTable();
+    }
+    function qty(btn, d) { let inp = btn.parentElement.querySelector('input'); let v = parseInt(inp.value) + d; if(v<0)v=0; inp.value = v; updateTable(); }
+    function addToCart(name, btn) { let qIn = btn.parentElement.querySelector('.qty-input-phone'); let q = parseInt(qIn.value); let p = btn.closest('.item-card').querySelector('input[name="p_'+name+'"]:checked').value; if(q > 0) { cart.push({ name, qty: q, phone: p }); qIn.value = 0; updateTable(); } }
+    
+    // 보정 6: sync 함수에서 추가된 sales, phone 필드 명확히 동기화
+    function sync() { 
+        ['client', 'manager', 'sales', 'phone', 'fax', 'date', 'memo'].forEach(id => { 
+            let o = document.getElementById('out_'+id); 
+            let i = document.getElementById('in_'+id); 
+            if(o && i) o.innerText = i.value; 
+        }); 
+        updateTable(); 
+    }
+
+    function handlePhone(el) {
+        let val = el.value.replace(/[^0-9]/g, '');
+        if (val.length < 4) el.value = val;
+        else if (val.length < 7) el.value = val.substr(0, 3) + '-' + val.substr(3);
+        else if (val.length < 11) el.value = val.substr(0, 3) + '-' + val.substr(3, 3) + '-' + val.substr(6);
+        else el.value = val.substr(0, 3) + '-' + val.substr(3, 4) + '-' + val.substr(7);
+    }
+
+    function updateTable() {
+        const body = document.getElementById('quoteBody'); body.innerHTML = '';
+        let totalSum = 0, totalComm = 0, no = 1, hasPhone = cart.length > 0, hasTV = false;
+        
+        document.querySelectorAll('.item-card[data-cat="가입유형"]').forEach(card => {
+            let inp = card.querySelector('input[data-name]');
+            if(inp && parseInt(inp.value) > 0) totalComm += (prodData[inp.dataset.name].comm * parseInt(inp.value));
+        });
+
+        document.querySelectorAll('.item-card').forEach(card => { 
+            if(card.dataset.cat === "TV" && parseInt(card.querySelector('input[data-name]')?.value || 0) > 0) hasTV = true; 
+        });
+
+        let mainRows = [], subRows = [];
+        let mainInternetIndex = -1;
+
+        document.querySelectorAll('.item-card').forEach(card => {
+            if(card.dataset.cat === "전화 요금제" || card.dataset.cat === "가입유형") return;
+            let inp = card.querySelector('input[data-name]'); if(!inp) return;
+            let q = parseInt(inp.value), name = inp.dataset.name, note = card.querySelector('.note').value, data = prodData[name];
+            
+            if(q > 0) {
+                totalComm += (data.comm || 0) * q;
+                let b = data.before || data.final || 0, d = data.disc || 0;
+                
+                if(name === "지니 TV 베이직") { b = 14000; d = 0; } 
+                else if(name === "KT WIFI") { b = 3000; d = -2000; }
+                else if(name === "KT Giga WIFI") { b = 3000; d = -3000; }
+                else if(card.dataset.cat === "인터넷/오피스넷" || card.dataset.cat === "패밀리 인터넷") {
+                    if (mainInternetIndex === -1) {
+                        mainInternetIndex = 1;
+                        if (name.includes("100MB")) { if (hasPhone) d = -2000; }
+                        else { if (hasTV && hasPhone) d = -5000; else if (hasTV) d = -3000; else if (hasPhone) d = -2000; }
+                    }
+                }
+                
+                let rs = (b + d) * q; totalSum += rs;
+                let h = `<tr><td>{NO}</td><td style="text-align:left;">${name}</td><td>${q}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${rs.toLocaleString()}</td><td>${note}</td></tr>`;
+                if(card.dataset.cat === "부가서비스" || card.dataset.cat === "TV BIZ" || card.dataset.cat === "고정아이피") subRows.push(h); else mainRows.push(h);
+            }
+        });
+
+        cart.forEach(item => {
+            let data = prodData[item.name];
+            totalComm += (data.comm || 0) * item.qty;
+            let extra = 0;
+            if (item.name === "종량제" || ["유무선 30", "유무선 50"].includes(item.name)) {
+                extra = (item.phone === "100M") ? 500 : 800;
+            }
+            let pay = (data.final + extra) * item.qty;
+            let b = (item.name === "종량제") ? (data.final + extra) : (pay + 2000);
+            let d = (item.name === "종량제") ? 0 : -2000;
+            totalSum += pay;
+            mainRows.push(`<tr><td>{NO}</td><td style="text-align:left;">${item.name}(${item.phone})</td><td>${item.qty}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${pay.toLocaleString()}</td><td></td></tr>`);
+        });
+
+        [...mainRows, ...subRows].forEach(r => body.innerHTML += r.replace('{NO}', no++));
+        for(let i=no; i<=10; i++) body.innerHTML += '<tr><td>'+i+'</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+        document.getElementById('finalAmt').innerText = totalSum.toLocaleString();
+        
+        let dt = new Date(document.getElementById('in_date').value || new Date());
+        let sett = totalComm - Math.floor(totalComm * 0.133);
+        document.getElementById('out_quote_no').innerText = `${dt.getFullYear()}${sett}-${String(dt.getMonth()+1).padStart(2,'0')}${String(dt.getDate()).padStart(2,'0')}${totalComm}`;
+        syncMobileScale();
+    }
+
+    async function saveImage() {
+        const area = document.getElementById('printArea');
+        const wrapper = document.getElementById('printWrapper');
+        const currentTransform = wrapper.style.transform;
+        wrapper.style.transform = "none";
+        await document.fonts.ready;
+        const canvas = await html2canvas(area, { 
+            scale: 3, 
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            width: area.offsetWidth,
+            height: area.offsetHeight,
+            windowWidth: 1200,
+            onclone: (clonedDoc) => {
+                const clonedArea = clonedDoc.getElementById('printArea');
+                clonedArea.style.boxShadow = "none";
+                clonedDoc.getElementById('printWrapper').style.transform = "none";
+            }
+        });
+        wrapper.style.transform = currentTransform;
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL("image/png", 1.0);
+        link.download = `KT견적서_${document.getElementById('in_client').value || 'KT'}.png`;
+        link.click();
+    }
+    init();
+</script>
+</body>
+</html>
