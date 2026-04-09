@@ -27,7 +27,7 @@
         @media (min-width: 768px) { .item-grid { grid-template-columns: repeat(2, 1fr); } }
 
         .wifi-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 12px !important; width: 100%; box-sizing: border-box; margin-top: 10px; }
-        @media (min-width: 768px) { .wifi-grid { grid-template-columns: 1fr 1fr !important; } }
+        @media (min-width: 768px) { .wifi-grid { grid-template-columns: repeat(2, 1fr) !important; } }
         
         .item-card { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
         .item-name { font-weight: bold; border-left: 4px solid #E4002B; padding-left: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -86,7 +86,6 @@
             <div class="config-group"><label>수 신</label><input type="text" id="in_client" oninput="sync()"></div>
             <div class="config-group"><label>고객번호</label><input type="text" id="in_manager" oninput="handlePhone(this); sync()"></div>
             <div class="config-group"><label>판매담당</label><input type="text" id="in_sales" oninput="sync()" placeholder="담당자 성함 입력"></div>
-            <!-- 판매번호 부분 수정: 기본값 삭제 및 placeholder 추가 -->
             <div class="config-group"><label>판매번호</label><input type="text" id="in_phone" oninput="handlePhone(this); sync()" placeholder="판매자 번호 입력"></div>
             <div class="config-group"><label>FAX</label><input type="text" id="in_fax" oninput="handlePhone(this); sync()"></div>
             <div class="config-group"><label>견적일</label><input type="date" id="in_date" oninput="sync()"></div>
@@ -128,9 +127,10 @@
             </div>
         </div>
     </div>
+    <!-- 이미지 저장 버튼 옆에 [이미지 복사 전송] 버튼으로 기능 강화 -->
     <div class="fixed-btn-group">
         <button class="btn-footer" style="background: #E4002B;" onclick="saveImage()">📸 이미지 저장</button>
-        <button class="btn-footer" style="background: #007AFF;" onclick="sendSMS()">💬 메시지 전송</button>
+        <button class="btn-footer" style="background: #0078D4;" onclick="copyAndSendSMS()">💬 이미지 복사 전송</button>
         <button class="btn-footer" style="background: #333;" onclick="window.print()">🖨️ 인쇄 / PDF</button>
     </div>
 </div>
@@ -144,10 +144,35 @@
         } else { alert('비밀번호가 틀렸습니다.'); document.getElementById('pwInput').value = ''; }
     }
 
-    function sendSMS() {
+    // [핵심 추가] 이미지 캡처 -> 클립보드 복사 -> 메시지창 열기
+    async function copyAndSendSMS() {
         const phone = document.getElementById('in_manager').value;
         if(!phone) { alert("고객번호(전화번호)를 먼저 입력해주세요."); return; }
-        window.location.href = `sms:${phone}`;
+
+        const area = document.getElementById('printArea');
+        const wrapper = document.getElementById('printWrapper');
+        const currentTransform = wrapper.style.transform;
+        
+        // 캡처를 위해 잠시 스케일 해제
+        wrapper.style.transform = "none";
+        
+        try {
+            const canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+            
+            canvas.toBlob(async (blob) => {
+                const data = [new ClipboardItem({ [blob.type]: blob })];
+                await navigator.clipboard.write(data);
+                
+                // 메시지 앱 호출
+                window.location.href = `sms:${phone}`;
+                
+                alert("견적서 이미지가 복사되었습니다!\n메시지 창에서 [Ctrl + V]를 눌러 전송하세요.");
+            });
+        } catch (err) {
+            alert("이미지 복사에 실패했습니다. 브라우저 보안 설정을 확인해주세요.");
+        } finally {
+            wrapper.style.transform = currentTransform;
+        }
     }
 
     function syncMobileScale() {
