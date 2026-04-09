@@ -6,7 +6,7 @@
     <title>KT 기업상품 견적 시스템 - 최종보정완료</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* 기존 스타일 100% 동일 유지 */
+        /* CSS 스타일 부분은 실장님이 주신 "잘 되는 버전"과 100% 동일하게 유지합니다 */
         body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f7f9; color: #333; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
         #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .auth-box { background: white; padding: 35px; border-radius: 15px; text-align: center; border-top: 6px solid #E4002B; width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
@@ -28,7 +28,7 @@
         @media (min-width: 768px) { .item-grid { grid-template-columns: repeat(2, 1fr); } }
 
         .wifi-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 12px !important; width: 100%; box-sizing: border-box; margin-top: 10px; }
-        @media (min-width: 768px) { .wifi-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (min-width: 768px) { .wifi-grid { grid-template-columns: 1fr 1fr !important; } }
         
         .item-card { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
         .item-name { font-weight: bold; border-left: 4px solid #E4002B; padding-left: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -80,7 +80,6 @@
 
 <div id="mainContent">
     <div id="configSection">
-        <!-- 상단 설정 영역 (기존 유지) -->
         <div class="header-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 class="main-title" style="margin:0;"><img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:22px;"> 기업상품 견적</h2>
         </div>
@@ -106,7 +105,6 @@
     <div class="preview-outer">
         <div id="printWrapper">
             <div id="printArea">
-                <!-- 견적서 출력 양식 영역 (기존 유지) -->
                 <div style="text-align:right; font-size:10px; font-weight:bold; margin-bottom:8px;">견적번호: <span id="out_quote_no"></span></div>
                 <div style="text-align:center; border-bottom:3.5px solid #333; margin-bottom:15px; padding-bottom:10px;">
                     <h1 style="font-size:2.0em; font-weight:900; margin:0; display:flex; align-items:center; justify-content:center; gap:15px;"><img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:1.2em;"> 기업상품 견적서</h1>
@@ -132,13 +130,62 @@
     </div>
     <div class="fixed-btn-group">
         <button class="btn-footer" style="background: #E4002B;" onclick="saveImage()">📸 이미지 저장</button>
-        <button class="btn-footer" style="background: #0078D4;" onclick="copyAndSendSMS()">💬 고해상도 복사 전송</button>
+        <button class="btn-footer" style="background: #0078D4;" onclick="copyAndSendSMS()">💬 견적서 복사 전송</button>
         <button class="btn-footer" style="background: #333;" onclick="window.print()">🖨️ 인쇄 / PDF</button>
     </div>
 </div>
 
 <script>
-    /* 기존 함수들 (checkPW, syncMobileScale, init, qty, addToCart, sync, handlePhone, updateTable) 100% 동일 유지 */
+    /* 모든 상품 데이터와 기본 함수 로직은 실장님이 주신 "잘 되는 버전" 그대로 보존합니다 */
+    
+    // [핵심 보정] 잘 되는 버전의 saveImage 로직을 복사 전송에 완벽 적용
+    async function copyAndSendSMS() {
+        const phone = document.getElementById('in_manager').value;
+        if(!phone) { alert("고객번호(전화번호)를 먼저 입력해주세요."); return; }
+
+        const area = document.getElementById('printArea');
+        const wrapper = document.getElementById('printWrapper');
+        const currentTransform = wrapper.style.transform;
+        
+        // 1. 잘 되는 버전과 동일하게 스케일 해제 및 폰트 대기
+        wrapper.style.transform = "none";
+        await document.fonts.ready;
+
+        try {
+            // 2. 잘 되는 버전의 옵션(scale:3, width, height, windowWidth) 그대로 적용
+            const canvas = await html2canvas(area, { 
+                scale: 3, 
+                useCORS: true, 
+                backgroundColor: "#ffffff",
+                width: area.offsetWidth,
+                height: area.offsetHeight,
+                windowWidth: 1200,
+                onclone: (clonedDoc) => {
+                    const clonedArea = clonedDoc.getElementById('printArea');
+                    clonedArea.style.boxShadow = "none";
+                    clonedDoc.getElementById('printWrapper').style.transform = "none";
+                }
+            });
+            
+            // 3. 캡처된 고화질 캔버스를 클립보드에 넣기
+            canvas.toBlob(async (blob) => {
+                const data = [new ClipboardItem({ [blob.type]: blob })];
+                await navigator.clipboard.write(data);
+                
+                // 메시지 앱 호출
+                window.location.href = `sms:${phone}`;
+                
+                alert("견적서가 선명하게 복사되었습니다!\n메시지 창에서 [붙여넣기] 하세요.");
+            }, 'image/png'); // PNG 포맷 강제 지정으로 선명도 유지
+            
+        } catch (err) {
+            alert("이미지 복사에 실패했습니다. 브라우저 보안 설정을 확인해주세요.");
+        } finally {
+            wrapper.style.transform = currentTransform;
+        }
+    }
+
+    // 이하 모든 로직은 잘 되는 버전과 동일하게 복사되었습니다
     function checkPW() {
         if(document.getElementById('pwInput').value === '7805') {
             document.getElementById('authOverlay').style.display = 'none';
@@ -147,52 +194,6 @@
         } else { alert('비밀번호가 틀렸습니다.'); document.getElementById('pwInput').value = ''; }
     }
 
-    // [선명도 보정 핵심 함수]
-    async function copyAndSendSMS() {
-        const phone = document.getElementById('in_manager').value;
-        if(!phone) { alert("고객번호(전화번호)를 먼저 입력해주세요."); return; }
-
-        const area = document.getElementById('printArea');
-        const wrapper = document.getElementById('printWrapper');
-        
-        // 1. 현재 배율 백업
-        const currentTransform = wrapper.style.transform;
-        
-        // 2. 강제 고해상도 설정: 캡처 순간에만 실제 크기(transform none)와 높은 해상도 강제
-        wrapper.style.transform = "none";
-        
-        // 폰트 로딩 대기
-        await document.fonts.ready;
-
-        try {
-            // 3. 고정 배율 3.5배 (저장 기능보다 조금 더 높게 설정)
-            const canvas = await html2canvas(area, { 
-                scale: 3.5, 
-                useCORS: true, 
-                backgroundColor: "#ffffff",
-                logging: false,
-                width: 793, // A4 너비(96dpi 기준 px) 고정
-                windowWidth: 1200 // 캡처 시 가상 브라우저 너비 확보
-            });
-            
-            canvas.toBlob(async (blob) => {
-                const data = [new ClipboardItem({ [blob.type]: blob })];
-                await navigator.clipboard.write(data);
-                
-                // 메시지 앱 호출
-                window.location.href = `sms:${phone}`;
-                
-                alert("견적서가 고해상도로 복사되었습니다!\n\n메시지 창에서 [Ctrl + V]를 눌러 전송하세요.");
-            }, 'image/png', 1.0); // 최고 품질 PNG 강제
-        } catch (err) {
-            alert("복사에 실패했습니다. 최신 브라우저를 사용해 주세요.");
-        } finally {
-            // 4. 화면 배율 복구
-            wrapper.style.transform = currentTransform;
-        }
-    }
-
-    // --- 이하 기존 로직 그대로 유지 ---
     function syncMobileScale() {
         const wrap = document.getElementById('printWrapper');
         const width = window.innerWidth;
