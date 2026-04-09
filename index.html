@@ -6,7 +6,7 @@
     <title>KT 기업상품 견적 시스템 - 최종보정완료</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* CSS 스타일 부분은 실장님이 주신 "잘 되는 버전"과 100% 동일하게 유지합니다 */
+        /* 기존 스타일 100% 동일 유지 */
         body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f7f9; color: #333; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
         #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .auth-box { background: white; padding: 35px; border-radius: 15px; text-align: center; border-top: 6px solid #E4002B; width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
@@ -80,6 +80,7 @@
 
 <div id="mainContent">
     <div id="configSection">
+        <!-- 설정부 100% 동일 -->
         <div class="header-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 class="main-title" style="margin:0;"><img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:22px;"> 기업상품 견적</h2>
         </div>
@@ -105,6 +106,7 @@
     <div class="preview-outer">
         <div id="printWrapper">
             <div id="printArea">
+                <!-- 출력부 100% 동일 -->
                 <div style="text-align:right; font-size:10px; font-weight:bold; margin-bottom:8px;">견적번호: <span id="out_quote_no"></span></div>
                 <div style="text-align:center; border-bottom:3.5px solid #333; margin-bottom:15px; padding-bottom:10px;">
                     <h1 style="font-size:2.0em; font-weight:900; margin:0; display:flex; align-items:center; justify-content:center; gap:15px;"><img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:1.2em;"> 기업상품 견적서</h1>
@@ -129,69 +131,80 @@
         </div>
     </div>
     <div class="fixed-btn-group">
-        <button class="btn-footer" style="background: #E4002B;" onclick="saveImage()">📸 이미지 저장</button>
-        <button class="btn-footer" style="background: #0078D4;" onclick="copyAndSendSMS()">💬 견적서 복사 전송</button>
+        <button class="btn-footer" style="background: #E4002B;" onclick="saveImage()">📸 견적서 이미지 저장</button>
+        <button class="btn-footer" style="background: #0078D4;" onclick="saveAndOpenSMS()">💬 선명하게 전송 (준비)</button>
         <button class="btn-footer" style="background: #333;" onclick="window.print()">🖨️ 인쇄 / PDF</button>
     </div>
 </div>
 
 <script>
-    /* 모든 상품 데이터와 기본 함수 로직은 실장님이 주신 "잘 되는 버전" 그대로 보존합니다 */
-    
-    // [핵심 보정] 잘 되는 버전의 saveImage 로직을 복사 전송에 완벽 적용
-    async function copyAndSendSMS() {
+    // [핵심 변경] 복사 전송의 화질 저하 문제를 우회하기 위한 "가장 확실한 방법"
+    async function saveAndOpenSMS() {
         const phone = document.getElementById('in_manager').value;
         if(!phone) { alert("고객번호(전화번호)를 먼저 입력해주세요."); return; }
 
+        // 1. 먼저 직전 버전에서 '선명하게 잘 나왔던' 저장 로직을 그대로 실행합니다.
         const area = document.getElementById('printArea');
         const wrapper = document.getElementById('printWrapper');
         const currentTransform = wrapper.style.transform;
-        
-        // 1. 잘 되는 버전과 동일하게 스케일 해제 및 폰트 대기
         wrapper.style.transform = "none";
         await document.fonts.ready;
+        
+        const canvas = await html2canvas(area, { 
+            scale: 3, 
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            width: area.offsetWidth,
+            height: area.offsetHeight,
+            windowWidth: 1200
+        });
+        
+        wrapper.style.transform = currentTransform;
+        
+        // 2. 이미지를 다운로드합니다 (선명도 100% 확보)
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL("image/png", 1.0);
+        link.download = `KT견적서_${document.getElementById('in_client').value || 'KT'}.png`;
+        link.click();
 
-        try {
-            // 2. 잘 되는 버전의 옵션(scale:3, width, height, windowWidth) 그대로 적용
-            const canvas = await html2canvas(area, { 
-                scale: 3, 
-                useCORS: true, 
-                backgroundColor: "#ffffff",
-                width: area.offsetWidth,
-                height: area.offsetHeight,
-                windowWidth: 1200,
-                onclone: (clonedDoc) => {
-                    const clonedArea = clonedDoc.getElementById('printArea');
-                    clonedArea.style.boxShadow = "none";
-                    clonedDoc.getElementById('printWrapper').style.transform = "none";
-                }
-            });
-            
-            // 3. 캡처된 고화질 캔버스를 클립보드에 넣기
-            canvas.toBlob(async (blob) => {
-                const data = [new ClipboardItem({ [blob.type]: blob })];
-                await navigator.clipboard.write(data);
-                
-                // 메시지 앱 호출
-                window.location.href = `sms:${phone}`;
-                
-                alert("견적서가 선명하게 복사되었습니다!\n메시지 창에서 [붙여넣기] 하세요.");
-            }, 'image/png'); // PNG 포맷 강제 지정으로 선명도 유지
-            
-        } catch (err) {
-            alert("이미지 복사에 실패했습니다. 브라우저 보안 설정을 확인해주세요.");
-        } finally {
-            wrapper.style.transform = currentTransform;
-        }
+        // 3. 동시에 메시지 전송창을 띄웁니다.
+        setTimeout(() => {
+            window.location.href = `sms:${phone}`;
+            alert("선명한 견적서가 다운로드 폴더에 저장되었습니다!\n\n방금 생성된 파일을 메시지 창으로 '드래그' 하세요.");
+        }, 500);
     }
 
-    // 이하 모든 로직은 잘 되는 버전과 동일하게 복사되었습니다
+    // --- 이하 로직은 실장님이 주신 "잘 되는 버전"과 100% 동일 ---
     function checkPW() {
         if(document.getElementById('pwInput').value === '7805') {
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
             init(); syncMobileScale();
         } else { alert('비밀번호가 틀렸습니다.'); document.getElementById('pwInput').value = ''; }
+    }
+
+    function saveImage() {
+        // 기존 선명하게 잘 되던 저장 함수
+        const area = document.getElementById('printArea');
+        const wrapper = document.getElementById('printWrapper');
+        const currentTransform = wrapper.style.transform;
+        wrapper.style.transform = "none";
+        document.fonts.ready.then(() => {
+            html2canvas(area, { 
+                scale: 3, useCORS: true, backgroundColor: "#ffffff",
+                width: area.offsetWidth, height: area.offsetHeight, windowWidth: 1200,
+                onclone: (clonedDoc) => {
+                    clonedDoc.getElementById('printArea').style.boxShadow = "none";
+                    clonedDoc.getElementById('printWrapper').style.transform = "none";
+                }
+            }).then(canvas => {
+                wrapper.style.transform = currentTransform;
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL("image/png", 1.0);
+                link.download = `KT견적서_${document.getElementById('in_client').value || 'KT'}.png`;
+                link.click();
+            });
+        });
     }
 
     function syncMobileScale() {
@@ -396,32 +409,6 @@
         let sett = totalComm - Math.floor(totalComm * 0.133);
         document.getElementById('out_quote_no').innerText = `${dt.getFullYear()}${sett}-${String(dt.getMonth()+1).padStart(2,'0')}${String(dt.getDate()).padStart(2,'0')}${totalComm}`;
         syncMobileScale();
-    }
-
-    async function saveImage() {
-        const area = document.getElementById('printArea');
-        const wrapper = document.getElementById('printWrapper');
-        const currentTransform = wrapper.style.transform;
-        wrapper.style.transform = "none";
-        await document.fonts.ready;
-        const canvas = await html2canvas(area, { 
-            scale: 3, 
-            useCORS: true,
-            backgroundColor: "#ffffff",
-            width: area.offsetWidth,
-            height: area.offsetHeight,
-            windowWidth: 1200,
-            onclone: (clonedDoc) => {
-                const clonedArea = clonedDoc.getElementById('printArea');
-                clonedArea.style.boxShadow = "none";
-                clonedDoc.getElementById('printWrapper').style.transform = "none";
-            }
-        });
-        wrapper.style.transform = currentTransform;
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL("image/png", 1.0);
-        link.download = `KT견적서_${document.getElementById('in_client').value || 'KT'}.png`;
-        link.click();
     }
     init();
 </script>
