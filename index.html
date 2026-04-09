@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KT 기업상품 견적 시스템 - 최종보정완료</title>
+    <title>KT 기업상품 견적 시스템</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f7f9; color: #333; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
@@ -143,7 +143,7 @@
         } else { alert('비밀번호가 틀렸습니다.'); document.getElementById('pwInput').value = ''; }
     }
 
-    // [핵심 수정] 이미지 캡처 해상도를 3배로 높여 선명도 해결
+    // [핵심 추가] 이미지 캡처 -> 클립보드 복사 -> 메시지창 열기
     async function copyAndSendSMS() {
         const phone = document.getElementById('in_manager').value;
         if(!phone) { alert("고객번호(전화번호)를 먼저 입력해주세요."); return; }
@@ -155,18 +155,9 @@
         // 캡처를 위해 잠시 스케일 해제
         wrapper.style.transform = "none";
         
-        // 브라우저 폰트 로딩 대기
-        await document.fonts.ready;
-
         try {
-            // 보정: scale을 2에서 3으로 높여 직전 버전처럼 선명하게 처리
-            const canvas = await html2canvas(area, { 
-                scale: 3, 
-                useCORS: true, 
-                backgroundColor: "#ffffff",
-                width: area.offsetWidth,
-                height: area.offsetHeight
-            });
+            // [보정 포인트] scale을 2에서 3으로 높여 직전 버전처럼 선명하게 처리
+            const canvas = await html2canvas(area, { scale: 3, useCORS: true, backgroundColor: "#ffffff" });
             
             canvas.toBlob(async (blob) => {
                 const data = [new ClipboardItem({ [blob.type]: blob })];
@@ -175,8 +166,8 @@
                 // 메시지 앱 호출
                 window.location.href = `sms:${phone}`;
                 
-                // 실장님이 헷갈리지 않게 안내 멘트 강화
-                alert("견적서 이미지가 선명하게 복사되었습니다!\n\n열린 메시지 창에서 [Ctrl + V]를 눌러 붙여넣으세요.");
+                // [보정 포인트] 실장님이 헷갈리지 않게 안내 멘트 강화
+                alert("견적서 이미지가 선명하게 복사되었습니다!\n\n열린 메시지 창에서 [Ctrl + V]를 눌러 전송하세요.");
             });
         } catch (err) {
             alert("이미지 복사에 실패했습니다. 브라우저 보안 설정을 확인해주세요.");
