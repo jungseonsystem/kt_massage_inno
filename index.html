@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KT 기업상품 견적 시스템 - 최종보정본</title>
+    <title>KT 기업상품 견적 시스템 - 최종보정완료</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* [1] 인터페이스 스타일 (실장님 원본 유지) */
-        body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f7f9; color: #333; -webkit-font-smoothing: antialiased; }
+        /* [1] 기존 인터페이스 스타일 (실장님 원본 100% 유지) */
+        body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f7f9; color: #333; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
         #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .auth-box { background: white; padding: 35px; border-radius: 15px; text-align: center; border-top: 6px solid #E4002B; width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .auth-box h2 { font-size: 15px; margin-bottom: 20px; color: #333; white-space: nowrap; }
         .auth-box input { padding: 12px; width: 100%; border: 1px solid #ddd; border-radius: 6px; font-size: 20px; text-align: center; margin-bottom: 15px; box-sizing: border-box; }
         
         #mainContent { display: none; }
@@ -25,31 +26,29 @@
         
         .item-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         @media (min-width: 768px) { .item-grid { grid-template-columns: repeat(2, 1fr); } }
-        .item-card { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; }
-        .item-name { font-weight: bold; border-left: 4px solid #E4002B; padding-left: 8px; font-size: 14px; }
-        .stepper { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; height: 32px; width: fit-content; }
+        .item-card { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
+        .item-name { font-weight: bold; border-left: 4px solid #E4002B; padding-left: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .stepper { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; height: 32px; flex-shrink: 0; }
         .stepper button { width: 28px; height: 100%; border: none; background: #f8f9fa; cursor: pointer; }
         .stepper input { width: 30px; text-align: center; border: none; font-weight: bold; font-size: 13px; }
-        
         .phone-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-grow: 1; }
         .qty-input-phone { width: 55px !important; height: 32px; border: 1.5px solid #E4002B; padding: 4px; border-radius: 4px; text-align: center; font-weight: bold; font-size: 14px; }
         .btn-add { background: #E4002B; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; height: 32px; }
 
-        /* [2] 출력부 공문 디자인 (실장님 요청사항 100% 반영) */
+        /* [2] 출력부 공문 디자인 (실장님 요청사항 반영) */
         .preview-outer { width: 100%; background: #444; padding: 40px 0 160px 0; display: flex; flex-direction: column; align-items: center; }
         #printWrapper { width: 210mm; display: flex; justify-content: center; transform-origin: top center; position: relative; }
-        #printArea { width: 210mm; min-height: 297mm; background: white; padding: 22mm 18mm; box-sizing: border-box; position: relative; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+        #printArea { width: 210mm; min-height: 297mm; background: white; padding: 22mm 18mm; box-sizing: border-box; position: relative; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.6); z-index: 1; }
 
-        .official-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 25px; }
+        .official-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 20px; }
         .kt-branch-text { font-size: 16px; font-weight: bold; color: #333; }
         
-        /* [상단 정보 테이블 보정] */
         .doc-info-table { width: 100%; margin-bottom: 12px; font-size: 14px; border-collapse: collapse; table-layout: fixed; }
-        .doc-info-table td { padding: 4px 0; vertical-align: top; }
-        .doc-label { font-weight: bold; width: 90px; }
-        .doc-value { width: calc(50% - 90px); }
+        .doc-info-table td { padding: 3px 0; vertical-align: top; }
+        .doc-label { font-weight: bold; width: 95px; }
+        .doc-value { width: calc(50% - 95px); }
 
-        .doc-subject { font-size: 18px; font-weight: 900; border-top: 2.5px solid #333; border-bottom: 1.2px solid #333; padding: 12px 0; margin: 12px 0; }
+        .doc-subject { font-size: 18px; font-weight: 900; border-top: 2.5px solid #333; border-bottom: 1.2px solid #333; padding: 10px 0; margin: 12px 0; }
         .greeting-text { font-size: 14px; line-height: 1.8; margin-bottom: 15px; white-space: pre-wrap; word-break: keep-all; }
         .highlight-blue { color: #0078D4; text-decoration: underline; font-weight: bold; }
 
@@ -82,14 +81,14 @@
         <div class="config-grid">
             <div class="config-group"><label>수 신</label><input type="text" id="in_client" oninput="sync()"></div>
             <div class="config-group"><label>고객번호</label><input type="text" id="in_manager" oninput="handlePhone(this); sync()"></div>
-            <div class="config-group"><label>판매담당</label><input type="text" id="in_sales" oninput="sync()" placeholder="담당자 성함"></div>
-            <div class="config-group"><label>판매자번호</label><input type="text" id="in_phone" oninput="handlePhone(this); sync()" placeholder="판매자 번호"></div>
+            <div class="config-group"><label>판매담당</label><input type="text" id="in_sales" oninput="sync()" placeholder="담당자 성함 입력"></div>
+            <div class="config-group"><label>판매자번호</label><input type="text" id="in_phone" oninput="handlePhone(this); sync()" placeholder="판매자 번호 입력"></div>
             <div class="config-group"><label>FAX</label><input type="text" id="in_fax" oninput="handlePhone(this); sync()"></div>
             <div class="config-group"><label>견적일</label><input type="date" id="in_date" oninput="sync()"></div>
         </div>
         <div class="config-group" style="margin-top:10px;">
             <label>조건 및 안내사항</label>
-            <textarea id="in_memo" oninput="sync()" style="height:100px;">* 개소의 유동성으로 인터넷 개수가 추가 또는 축소 될 수 있습니다.
+            <textarea id="in_memo" oninput="sync()" style="height:120px;">* 개소의 유동성으로 인터넷 개수가 추가 또는 축소 될 수 있습니다.
 * 센트릭스는 각 부가팩 포함입니다.
 * FAX 상품은 제외입니다.
 * 무선전화기 22,000원 별도 구매
@@ -103,7 +102,7 @@
             <div id="printArea">
                 <div class="official-header">
                     <img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:35px;">
-                    <div class="kt-branch-text">KT 수도권 광역본부 북부지사</div>
+                    <div class="kt-branch-text">KT 수도권 광역본부</div>
                 </div>
 
                 <div style="text-align:right; font-size:10px; font-weight:bold; margin-bottom:8px;">견적번호: <span id="out_quote_no"></span></div>
@@ -123,7 +122,7 @@
                     </tr>
                 </table>
 
-                <div class="doc-subject">제 목 : 소상공인 및 중소기업 품질관리 개선 사업 및 ESG 지원 사업 안내</div>
+                <div class="doc-subject">제 목 : 소상공인 , 중소기업 품질개선 사업 및 ESG 지원 사업안내</div>
 
                 <div class="greeting-text">안녕하십니까?
 극한의 어려운 경제상황에서도 사업을 지켜내시는 대표님께 깊은 존경을 표합니다.
@@ -150,7 +149,7 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
 
                 <div class="doc-footer">
                     <img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:35px;"><br>
-                    <div class="doc-footer-title">KT 경기북부지사장</div>
+                    <div class="doc-footer-title">KT 수도권본부</div>
                     <img src="stamp.png" class="footer-stamp" onerror="this.style.display='none'">
                 </div>
             </div>
@@ -164,7 +163,7 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
 </div>
 
 <script>
-    /* [실장님 416줄 원본 로직 100% 동일] */
+    // [원본 데이터 100% 보존 + [수정4] stb 요금 보정]
     const prodData = {
         "인터넷 _슬림(100MB)": { before: 22000, comm: 10000 },
         "인터넷 _슬림플러스(200MB)": { before: 27500, comm: 30000 },
@@ -197,7 +196,7 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
         "지니 TV 에센스 추가회선": { before: 8000, final: 8000, comm: 20000 },
         "지니 TV 모든G": { before: 18000, disc: -4000, final: 14000, comm: 100000 },
         "지니 TV 모든G 추가회선": { before: 18000, disc: -4000, final: 14000, comm: 80000 },
-        "지니 a stb": { before: 0, disc: 3000, final: 3000, comm: 0 },
+        "지니 a stb": { before: 3000, disc: 0, final: 3000, comm: 0 },
         "오피스에센스 고정IP": { before: 50000, disc: -5000, final: 45000, comm: 100000 },
         "오피스베이직 고정IP": { before: 45000, disc: -4000, final: 41000, comm: 100000 },
         "오피스슬림 고정IP": { before: 30000, disc: -2000, final: 28000, comm: 80000 },
@@ -226,7 +225,7 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
     };
 
     let cart = [];
-    function checkPW() { if(document.getElementById('pwInput').value === '7805') { document.getElementById('authOverlay').style.display = 'none'; document.getElementById('mainContent').style.display = 'block'; init(); syncMobileScale(); } else { alert('틀렸습니다.'); } }
+    function checkPW() { if(document.getElementById('pwInput').value === '7805') { document.getElementById('authOverlay').style.display = 'none'; document.getElementById('mainContent').style.display = 'block'; init(); syncMobileScale(); } else { alert('비밀번호가 틀렸습니다.'); } }
 
     function init() {
         const wrap = document.getElementById('product-lists'); wrap.innerHTML = '';
@@ -252,7 +251,7 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
         if(c === "전화 요금제") {
             h += `<div class="phone-row"><div class="phone-selector"><label><input type="radio" name="p_${name}" value="100M" checked> 100M</label><label><input type="radio" name="p_${name}" value="1G"> 1G</label></div><div class="phone-qty-container"><input type="number" class="qty-input-phone" value="0" placeholder="수량"><button class="btn-add" onclick="addToCart('${name}', this)">적용</button></div></div>`;
         } else {
-            h += `<div class="stepper"><button onclick="qty(this,-1)">-</button><input type="text" value="0" data-name="${name}" readonly><button onclick="qty(this,1)">+</button></div><div class="note-box"><input type="text" class="note" oninput="updateTable()" placeholder="비고"></div>`;
+            h += `<div class="stepper"><button onclick="qty(this,-1)">-</button><input type="text" value="0" data-name="${name}" readonly><button onclick="qty(this,1)">+</button></div><div class="note-box"><input type="text" class="note" oninput="updateTable()" placeholder="비고 입력"></div>`;
         }
         return h + `</div>`;
     }
