@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KT 기업상품 견적 시스템 - 최종보정완료</title>
+    <title>KT 기업상품 견적 시스템 - 공문양식 최종본</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* [1] 기존 인터페이스 스타일 (실장님 원본 100% 유지) */
+        /* 실장님 원본 스타일 100% 유지 */
         body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f7f9; color: #333; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
         #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .auth-box { background: white; padding: 35px; border-radius: 15px; text-align: center; border-top: 6px solid #E4002B; width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
@@ -23,6 +23,7 @@
         .category-header { background: #333; color: white; padding: 12px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .category-content { display: none; padding: 12px; background: #fcfcfc; }
         .category-content.active { display: block; }
+        
         .item-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         @media (min-width: 768px) { .item-grid { grid-template-columns: repeat(2, 1fr); } }
         .wifi-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 12px !important; width: 100%; box-sizing: border-box; margin-top: 10px; }
@@ -33,32 +34,36 @@
         .stepper { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; height: 32px; flex-shrink: 0; }
         .stepper button { width: 28px; height: 100%; border: none; background: #f8f9fa; cursor: pointer; }
         .stepper input { width: 30px; text-align: center; border: none; font-weight: bold; font-size: 13px; }
+        
         .phone-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-grow: 1; }
         .qty-input-phone { width: 55px !important; height: 32px; border: 1.5px solid #E4002B; padding: 4px; border-radius: 4px; text-align: center; font-weight: bold; font-size: 14px; }
         .btn-add { background: #E4002B; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; height: 32px; }
 
-        /* [2] 출력부 공문 디자인 (이미지 보정 반영) */
+        /* [출력부 공문 레이아웃 보정] */
         .preview-outer { width: 100%; background: #444; padding: 40px 0 160px 0; display: flex; flex-direction: column; align-items: center; }
         #printWrapper { width: 210mm; display: flex; justify-content: center; transform-origin: top center; position: relative; }
         #printArea { width: 210mm; min-height: 297mm; background: white; padding: 22mm 18mm; box-sizing: border-box; position: relative; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.6); z-index: 1; }
 
-        .official-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 25px; }
+        .official-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 20px; }
         .kt-branch-text { font-size: 16px; font-weight: bold; color: #333; }
         
-        .doc-info-table { width: 100%; margin-bottom: 15px; font-size: 14px; border-collapse: collapse; }
-        .doc-info-table td { padding: 4px 0; vertical-align: top; }
+        .doc-info-table { width: 100%; margin-bottom: 12px; font-size: 14px; border-collapse: collapse; }
+        .doc-info-table td { padding: 3px 0; vertical-align: top; }
         .doc-label { font-weight: bold; width: 85px; }
-        .doc-subject { font-size: 18px; font-weight: 900; border-top: 2.5px solid #333; border-bottom: 1.2px solid #333; padding: 12px 0; margin: 15px 0; }
+        .doc-subject { font-size: 18px; font-weight: 900; border-top: 2.5px solid #333; border-bottom: 1.2px solid #333; padding: 10px 0; margin: 12px 0; }
         
+        /* 실장님이 주신 인사말 전용 스타일 */
+        .greeting-text { font-size: 14px; line-height: 1.8; margin-bottom: 15px; white-space: pre-wrap; word-break: keep-all; }
+
         .main-table { width: 100%; border-collapse: collapse; border: 1.2px solid #000; table-layout: fixed; position: relative; z-index: 2; }
         .main-table th { background: #B8CCE4; border: 1.2px solid #000; padding: 8px; text-align: center; font-size: 12px; }
-        .main-table td { border: 1.2px solid #000; padding: 5px 8px !important; text-align: center; font-size: 12px; background: rgba(255,255,255,0.7); height: 32px; position: relative; z-index: 2; }
+        .main-table td { border: 1.2px solid #000; padding: 5px 8px !important; text-align: center; font-size: 12px; background: rgba(255,255,255,0.7); height: 32px; }
         
         .total-value-cell { text-align: right !important; padding-right: 20px !important; color: #E4002B; font-size: 1.4em; font-weight: bold; }
         
-        .doc-footer { margin-top: auto; padding-top: 50px; text-align: center; position: relative; padding-bottom: 30px; }
+        .doc-footer { margin-top: auto; padding-top: 40px; text-align: center; position: relative; padding-bottom: 30px; }
         .doc-footer-title { font-size: 20px; font-weight: 900; letter-spacing: 5px; margin-top: 8px; }
-        .footer-stamp { position: absolute; right: 60px; top: 35px; width: 85px; opacity: 0.85; z-index: 3; }
+        .footer-stamp { position: absolute; right: 60px; top: 30px; width: 85px; opacity: 0.85; z-index: 3; }
 
         .table-container { position: relative; width: 100%; }
         .table-watermark { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); width: 350px; opacity: 0.12; z-index: 1; pointer-events: none; }
@@ -100,7 +105,7 @@
             <div id="printArea">
                 <div class="official-header">
                     <img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:35px;">
-                    <div class="kt-branch-text">KT 수도권광역본부 북부지사</div>
+                    <div class="kt-branch-text">KT 수도권 광역본부 북부지사</div>
                 </div>
 
                 <div style="text-align:right; font-size:10px; font-weight:bold; margin-bottom:8px;">견적번호: <span id="out_quote_no"></span></div>
@@ -108,15 +113,13 @@
                 <table class="doc-info-table">
                     <tr><td class="doc-label">시행일자 :</td><td id="out_date_range"></td></tr>
                     <tr><td class="doc-label">받      음 :</td><td id="out_client" style="font-weight:900;"></td></tr>
-                    <tr><td class="doc-label">발      신 :</td><td>㈜케이티 북부법인영업팀 <span id="out_sales" style="margin-left:10px;"></span></td></tr>
+                    <tr><td class="doc-label">제      목 :</td><td style="font-weight:bold;">소상공인 및 중소기업 품질관리 개선 사업 및 ESG 지원 사업 안내</td></tr>
                 </table>
 
-                <div class="doc-subject">제 목 : 소상공인 및 중소기업 통신인프라 구축 지원 사업 안내</div>
-
-                <div style="font-size:14px; line-height:1.8; margin-bottom:20px;">
-                    1. 귀 사의 일익 번창하심을 기원합니다.<br>
-                    2. 당사는 대한민국 정보통신 산업을 선도해 온 국민기업으로서, 아래와 같이 최적화된 맞춤형 견적을 제안드립니다.
-                </div>
+                <div class="greeting-text">안녕하십니까?
+극한의 어려운 경제상황에서도 사업을 지켜내시는 대표님께 깊은 존경을 표합니다.
+대표님 사업장의 무궁한 발전을 기원합니다.
+KT 수도권 광역본부에서는 고객님 위치하신 지역의 품질개선 및 네트워크 점검 그리고 네트워크 장비 무상 교체 사업을 진행하고 있사오니, 이점 참고하시어 경영부담 완화 및 통신 환경 개선에 도움을 드리고자 합니다.</div>
 
                 <div class="table-container">
                     <img src="01_KT%20Wordmark%20(Standard)_01.png" class="table-watermark">
@@ -131,20 +134,20 @@
 
                 <table style="width:100%; border-collapse:collapse; border:1.2px solid #000;">
                     <tr>
-                        <td style="background:#B8CCE4; border:1.2px solid #000; text-align:center; width:15%; font-weight:bold; font-size:11px;">조건<br>및<br>안내사항</td>
-                        <td id="out_memo" style="border:1.2px solid #000; padding:15px; text-align:left; font-size:11px; line-height:1.8; white-space:pre-wrap; vertical-align:top; min-height:100px;"></td>
+                        <td style="background:#B8CCE4; border:1.2px solid #000; text-align:center; width:15%; font-weight:bold; font-size:11px; vertical-align:middle;">조건<br>및<br>안내사항</td>
+                        <td id="out_memo" style="border:1.2px solid #000; padding:15px; text-align:left; font-size:11px; line-height:1.8; white-space:pre-wrap; vertical-align:top; min-height:110px;"></td>
                     </tr>
                 </table>
 
                 <div class="doc-footer">
                     <img src="01_KT%20Wordmark%20(Standard)_01.png" style="height:35px;"><br>
-                    <div class="doc-footer-title">주식회사 케이티 경기북부지사장</div>
+                    <div class="doc-footer-title">KT 경기북부지사장</div>
                     <img src="stamp.png" class="footer-stamp" onerror="this.style.display='none'">
                 </div>
             </div>
         </div>
     </div>
-
+    
     <div class="fixed-btn-group">
         <button class="btn-footer" style="background: #E4002B;" onclick="saveImage()">📸 견적서 이미지 저장</button>
         <button class="btn-footer" style="background: #333;" onclick="window.print()">🖨️ PDF 출력</button>
@@ -152,7 +155,7 @@
 </div>
 
 <script>
-    // [실장님 원본 prodData 및 cats 100% 동일]
+    // [실장님 416줄 원본 로직 100% 동일 적용]
     const prodData = {
         "인터넷 _슬림(100MB)": { before: 22000, comm: 10000 },
         "인터넷 _슬림플러스(200MB)": { before: 27500, comm: 30000 },
