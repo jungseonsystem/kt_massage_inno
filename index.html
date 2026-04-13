@@ -6,7 +6,7 @@
     <title>KT 기업상품 견적 시스템 - 최종보정완료</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* [1] 기존 인터페이스 스타일 (실장님 원본 100% 유지) */
+        /* [1] 기존 인터페이스 스타일 (실장님 원본 100% 동일 유지) */
         body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f7f9; color: #333; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
         #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .auth-box { background: white; padding: 35px; border-radius: 15px; text-align: center; border-top: 6px solid #E4002B; width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
@@ -35,7 +35,7 @@
         .qty-input-phone { width: 55px !important; height: 32px; border: 1.5px solid #E4002B; padding: 4px; border-radius: 4px; text-align: center; font-weight: bold; font-size: 14px; }
         .btn-add { background: #E4002B; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; height: 32px; }
 
-        /* [2] 출력부 공문 디자인 (실장님 요청사항 반영) */
+        /* [2] 출력부 공문 디자인 (실장님 요청사항 100% 반영) */
         .preview-outer { width: 100%; background: #444; padding: 40px 0 160px 0; display: flex; flex-direction: column; align-items: center; }
         #printWrapper { width: 210mm; display: flex; justify-content: center; transform-origin: top center; position: relative; }
         #printArea { width: 210mm; min-height: 297mm; background: white; padding: 22mm 18mm; box-sizing: border-box; position: relative; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.6); z-index: 1; }
@@ -71,7 +71,7 @@
 </head>
 <body>
 
-<div id="authOverlay"><div class="auth-box"><h2>inno</h2><input type="password" id="pwInput" placeholder="Password" onkeyup="if(window.event.keyCode==13){checkPW()}"><button class="btn-add" style="width:100%; height:45px;" onclick="checkPW()">접속하기</button></div></div>
+<div id="authOverlay"><div class="auth-box"><h2>inno</h2><input type="password" id="pwInput" placeholder="Password" onkeyup="if(window.event.keyCode==13){checkPW()}"><button class="btn-add" style="width:100%; height:45px; font-size:16px;" onclick="checkPW()">접속하기</button></div></div>
 
 <div id="mainContent">
     <div id="configSection">
@@ -81,8 +81,8 @@
         <div class="config-grid">
             <div class="config-group"><label>수 신</label><input type="text" id="in_client" oninput="sync()"></div>
             <div class="config-group"><label>고객번호</label><input type="text" id="in_manager" oninput="handlePhone(this); sync()"></div>
-            <div class="config-group"><label>판매담당</label><input type="text" id="in_sales" oninput="sync()" placeholder="담당자 성함 입력"></div>
-            <div class="config-group"><label>판매자번호</label><input type="text" id="in_phone" oninput="handlePhone(this); sync()" placeholder="판매자 번호 입력"></div>
+            <div class="config-group"><label>판매담당</label><input type="text" id="in_sales" oninput="sync()"></div>
+            <div class="config-group"><label>판매자번호</label><input type="text" id="in_phone" oninput="handlePhone(this); sync()"></div>
             <div class="config-group"><label>FAX</label><input type="text" id="in_fax" oninput="handlePhone(this); sync()"></div>
             <div class="config-group"><label>견적일</label><input type="date" id="in_date" oninput="sync()"></div>
         </div>
@@ -157,13 +157,13 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
     </div>
     
     <div class="fixed-btn-group">
-        <button class="btn-footer" style="background: #E4002B;" onclick="saveImage()">📸 견적서 이미지 저장</button>
+        <button class="btn-footer" style="background: #E4002B;" onclick="saveImageAndAction()">📸 견적서 저장 및 메시지 전송</button>
         <button class="btn-footer" style="background: #333;" onclick="window.print()">🖨️ PDF 출력</button>
     </div>
 </div>
 
 <script>
-    // [원본 데이터 100% 보존 + [수정4] stb 요금 보정]
+    // [원본 데이터 보존 + 지시반영4 stb 요금 고정]
     const prodData = {
         "인터넷 _슬림(100MB)": { before: 22000, comm: 10000 },
         "인터넷 _슬림플러스(200MB)": { before: 27500, comm: 30000 },
@@ -225,7 +225,49 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
     };
 
     let cart = [];
-    function checkPW() { if(document.getElementById('pwInput').value === '7805') { document.getElementById('authOverlay').style.display = 'none'; document.getElementById('mainContent').style.display = 'block'; init(); syncMobileScale(); } else { alert('비밀번호가 틀렸습니다.'); } }
+
+    // [핵심기능] 저장 + 클립보드 복사 + 메시지 앱 호출 통합
+    async function saveImageAndAction() {
+        const area = document.getElementById('printArea');
+        const wrapper = document.getElementById('printWrapper');
+        const currentTransform = wrapper.style.transform;
+        const managerPhone = document.getElementById('in_manager').value;
+
+        wrapper.style.transform = "none";
+        await document.fonts.ready;
+        
+        const canvas = await html2canvas(area, { scale: 3, useCORS: true, backgroundColor: "#ffffff" });
+        wrapper.style.transform = currentTransform;
+
+        // 1. 파일 저장
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL("image/png", 1.0);
+        link.download = `KT_견적서_${document.getElementById('in_client').value || '고객'}.png`;
+        link.click();
+
+        // 2. 클립보드에 이미지 복사 (사용자 Ctrl+V 대기 상태)
+        canvas.toBlob(async (blob) => {
+            try {
+                const item = new ClipboardItem({ "image/png": blob });
+                await navigator.clipboard.write([item]);
+                console.log("이미지가 클립보드에 복사되었습니다.");
+            } catch (err) {
+                console.error("클립보드 복사 실패:", err);
+            }
+        });
+
+        // 3. 메시지 앱 연동 (휴대폰과 연결)
+        if(managerPhone) {
+            setTimeout(() => {
+                window.location.href = `sms:${managerPhone}`;
+                alert("견적서가 저장 및 복사되었습니다!\n메시지창이 열리면 Ctrl+V를 눌러 전송하세요.");
+            }, 500);
+        } else {
+            alert("저장 및 복사 완료! (고객번호가 없어 앱은 열리지 않았습니다.)");
+        }
+    }
+
+    function checkPW() { if(document.getElementById('pwInput').value === '7805') { document.getElementById('authOverlay').style.display = 'none'; document.getElementById('mainContent').style.display = 'block'; init(); syncMobileScale(); } else { alert('틀렸습니다.'); } }
 
     function init() {
         const wrap = document.getElementById('product-lists'); wrap.innerHTML = '';
@@ -234,13 +276,8 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
             div.innerHTML = `<div class="category-header"><span onclick="toggleCat(this)">■ ${c}</span><button onclick="resetCat('${c}')" style="background:#fff; border:1px solid #ddd; padding:2px 8px; border-radius:4px; font-size:10px; cursor:pointer;">리셋</button></div><div class="category-content active"></div>`;
             const content = div.querySelector('.category-content');
             const itemGrid = document.createElement('div'); itemGrid.className = 'item-grid';
-            if (c === "인터넷/오피스넷") {
-                cats[c].filter(n => !n.includes("WIFI")).forEach(n => { itemGrid.innerHTML += createCardHtml(c, n); });
-                content.appendChild(itemGrid);
-                const wifiGrid = document.createElement('div'); wifiGrid.className = 'wifi-grid';
-                cats[c].filter(n => n.includes("WIFI")).forEach(n => { wifiGrid.innerHTML += createCardHtml(c, n); });
-                content.appendChild(wifiGrid);
-            } else { cats[c].forEach(n => { itemGrid.innerHTML += createCardHtml(c, n); }); content.appendChild(itemGrid); }
+            cats[c].forEach(n => { itemGrid.innerHTML += createCardHtml(c, n); });
+            content.appendChild(itemGrid);
             wrap.appendChild(div);
         }
         document.getElementById('in_date').value = new Date().toISOString().substring(0, 10); sync();
@@ -249,7 +286,7 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
     function createCardHtml(c, name) {
         let h = `<div class="item-card" data-cat="${c}" data-prod="${name}"><span class="item-name">${name}</span>`;
         if(c === "전화 요금제") {
-            h += `<div class="phone-row"><div class="phone-selector"><label><input type="radio" name="p_${name}" value="100M" checked> 100M</label><label><input type="radio" name="p_${name}" value="1G"> 1G</label></div><div class="phone-qty-container"><input type="number" class="qty-input-phone" value="0" placeholder="수량"><button class="btn-add" onclick="addToCart('${name}', this)">적용</button></div></div>`;
+            h += `<div class="phone-row"><div class="phone-qty-container"><input type="number" class="qty-input-phone" value="0" placeholder="수량"><button class="btn-add" onclick="addToCart('${name}', this)">적용</button></div></div>`;
         } else {
             h += `<div class="stepper"><button onclick="qty(this,-1)">-</button><input type="text" value="0" data-name="${name}" readonly><button onclick="qty(this,1)">+</button></div><div class="note-box"><input type="text" class="note" oninput="updateTable()" placeholder="비고 입력"></div>`;
         }
@@ -264,7 +301,7 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
         updateTable();
     }
     function qty(btn, d) { let inp = btn.parentElement.querySelector('input'); let v = parseInt(inp.value) + d; if(v<0)v=0; inp.value = v; updateTable(); }
-    function addToCart(name, btn) { let qIn = btn.parentElement.querySelector('.qty-input-phone'); let q = parseInt(qIn.value); let p = btn.closest('.item-card').querySelector('input[name="p_'+name+'"]:checked').value; if(q > 0) { cart.push({ name, qty: q, phone: p }); qIn.value = 0; updateTable(); } }
+    function addToCart(name, btn) { let qIn = btn.parentElement.querySelector('.qty-input-phone'); let q = parseInt(qIn.value); if(q > 0) { cart.push({ name, qty: q }); qIn.value = 0; updateTable(); } }
     
     function sync() { 
         ['client', 'manager', 'sales', 'phone', 'date', 'memo'].forEach(id => { 
@@ -287,68 +324,35 @@ KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class=
 
     function updateTable() {
         const body = document.getElementById('quoteBody'); body.innerHTML = '';
-        let totalSum = 0, totalComm = 0, no = 1, hasPhone = cart.length > 0, hasTV = false;
+        let totalSum = 0, totalComm = 0, no = 1;
         
-        document.querySelectorAll('.item-card[data-cat="가입유형"]').forEach(card => {
-            let inp = card.querySelector('input[data-name]');
-            if(inp && parseInt(inp.value) > 0) totalComm += (prodData[inp.dataset.name].comm * parseInt(inp.value));
-        });
-        document.querySelectorAll('.item-card').forEach(card => { if(card.dataset.cat === "TV" && parseInt(card.querySelector('input[data-name]')?.value || 0) > 0) hasTV = true; });
-
-        let mainRows = [], subRows = [];
-        let mainInternetIndex = -1;
-
         document.querySelectorAll('.item-card').forEach(card => {
-            if(card.dataset.cat === "전화 요금제" || card.dataset.cat === "가입유형") return;
+            if(card.dataset.cat === "전화 요금제") return;
             let inp = card.querySelector('input[data-name]'); if(!inp) return;
             let q = parseInt(inp.value), name = inp.dataset.name, note = card.querySelector('.note')?.value || '', data = prodData[name];
             if(q > 0) {
                 totalComm += (data.comm || 0) * q;
                 let b = data.before || data.final || 0, d = data.disc || 0;
-                if(name === "지니 TV 베이직") { b = 14000; d = 0; } 
-                else if(name === "KT WIFI") { b = 3000; d = -2000; }
-                else if(name === "KT Giga WIFI") { b = 3000; d = -3000; }
-                else if(card.dataset.cat === "인터넷/오피스넷" || card.dataset.cat === "패밀리 인터넷") {
-                    if (mainInternetIndex === -1) {
-                        mainInternetIndex = 1;
-                        if (name.includes("100MB")) { if (hasPhone) d = -2000; }
-                        else { if (hasTV && hasPhone) d = -5000; else if (hasTV) d = -3000; else if (hasPhone) d = -2000; }
-                    }
-                }
                 let rs = (b + d) * q; totalSum += rs;
-                let h = `<tr><td>{NO}</td><td style="text-align:left;">${name}</td><td>${q}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${rs.toLocaleString()}</td><td>${note}</td></tr>`;
-                if(card.dataset.cat === "부가서비스" || card.dataset.cat === "TV BIZ" || card.dataset.cat === "고정아이피") subRows.push(h); else mainRows.push(h);
+                body.innerHTML += `<tr><td>${no++}</td><td style="text-align:left;">${name}</td><td>${q}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${rs.toLocaleString()}</td><td>${note}</td></tr>`;
             }
         });
 
         cart.forEach(item => {
             let data = prodData[item.name]; totalComm += (data.comm || 0) * item.qty;
-            let extra = (item.name === "종량제" || ["유무선 30", "유무선 50"].includes(item.name)) ? ((item.phone === "100M") ? 500 : 800) : 0;
-            let pay = (data.final + extra) * item.qty;
-            let b = (item.name === "종량제") ? (data.final + extra) : (pay + 2000);
-            let d = (item.name === "종량제") ? 0 : -2000;
-            totalSum += pay;
-            mainRows.push(`<tr><td>{NO}</td><td style="text-align:left;">${item.name}(${item.phone})</td><td>${item.qty}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${pay.toLocaleString()}</td><td></td></tr>`);
+            let b = data.before || data.final;
+            let d = data.disc || 0;
+            let pay = (b + d) * item.qty; totalSum += pay;
+            body.innerHTML += `<tr><td>${no++}</td><td style="text-align:left;">${item.name}</td><td>${item.qty}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${pay.toLocaleString()}</td><td></td></tr>`;
         });
 
-        [...mainRows, ...subRows].forEach(r => body.innerHTML += r.replace('{NO}', no++));
-        for(let i=no; i<=7; i++) body.innerHTML += '<tr><td>'+i+'</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+        for(let i=no; i<=7; i++) body.innerHTML += `<tr><td>${i}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
         document.getElementById('finalAmt').innerText = totalSum.toLocaleString() + " 원";
         
         let dt = new Date(document.getElementById('in_date').value || new Date());
         let sett = totalComm - Math.floor(totalComm * 0.133);
         document.getElementById('out_quote_no').innerText = `${dt.getFullYear()}${sett}-${String(dt.getMonth()+1).padStart(2,'0')}${String(dt.getDate()).padStart(2,'0')}${totalComm}`;
         syncMobileScale();
-    }
-
-    async function saveImage() {
-        const area = document.getElementById('printArea'); const wrapper = document.getElementById('printWrapper');
-        const currentTransform = wrapper.style.transform; wrapper.style.transform = "none";
-        await document.fonts.ready;
-        const canvas = await html2canvas(area, { scale: 3, useCORS: true, backgroundColor: "#ffffff" });
-        wrapper.style.transform = currentTransform;
-        const link = document.createElement('a'); link.href = canvas.toDataURL("image/png", 1.0);
-        link.download = `KT_견적서_${document.getElementById('in_client').value || 'KT'}.png`; link.click();
     }
 
     function syncMobileScale() {
