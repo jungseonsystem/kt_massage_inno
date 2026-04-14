@@ -271,11 +271,23 @@
         const body = document.getElementById('quoteBody'); body.innerHTML = '';
         let totalSum = 0, totalComm = 0, no = 1, hasPhone = cart.length > 0, hasTV = false;
         
+        // [지시사항 반영] 인터넷 베이직(500MB) 이상 체크 로직
+        let highSpeedInternet = false;
+        const targetHighProds = ["인터넷 _베이직(500MB)", "인터넷 _에센스(1GB)", "오피스넷 _베이직(500MB)", "오피스넷 _에센스(1GB)"];
+
+        document.querySelectorAll('.item-card').forEach(card => {
+            let inp = card.querySelector('input[data-name]');
+            let q = parseInt(inp?.value || 0);
+            if(q > 0) {
+                if(targetHighProds.includes(inp.dataset.name)) highSpeedInternet = true;
+                if(card.dataset.cat === "TV") hasTV = true;
+            }
+        });
+
         document.querySelectorAll('.item-card[data-cat="가입유형"]').forEach(card => {
             let inp = card.querySelector('input[data-name]');
             if(inp && parseInt(inp.value) > 0) totalComm += (prodData[inp.dataset.name].comm * parseInt(inp.value));
         });
-        document.querySelectorAll('.item-card').forEach(card => { if(card.dataset.cat === "TV" && parseInt(card.querySelector('input[data-name]')?.value || 0) > 0) hasTV = true; });
 
         for (let c in cats) {
             if (c === "가입유형") continue;
@@ -286,16 +298,23 @@
                     if(q > 0) {
                         let b = 0, d = 0, rs = 0;
                         if(c === "CCTV") {
-                            // [지시사항] CCTV 구간 요금제 적용
                             rs = cctvPrices[q] || 0; b = rs; d = 0;
                         } else {
                             let data = prodData[name];
                             totalComm += (data.comm || 0) * q;
                             b = data.before || data.final || 0; d = data.disc || 0;
-                            if(name === "지니 TV 베이직") { b = 14000; d = 0; } 
-                            else if(name === "KT WIFI") { b = 3000; d = -2000; }
-                            else if(name === "KT Giga WIFI") { b = 3000; d = -3000; }
-                            else if(c === "인터넷/오피스넷" || c === "패밀리 인터넷") {
+
+                            // [지시사항 반영] TV 결합 할인 로직 및 지니 a stb 정상화
+                            if (name === "지니 a stb") {
+                                b = 3000; d = 0;
+                            } else if (["지니 TV 베이직", "지니 TV 에센스", "지니 TV 모든G"].includes(name)) {
+                                b = data.before;
+                                d = (highSpeedInternet) ? -3000 : (data.disc || 0);
+                            } else if(name === "KT WIFI") { 
+                                b = 3000; d = -2000; 
+                            } else if(name === "KT Giga WIFI") { 
+                                b = 3000; d = -3000; 
+                            } else if(c === "인터넷/오피스넷" || c === "패밀리 인터넷") {
                                 if (name.includes("100MB")) { if (hasPhone) d = -2000; }
                                 else { if (hasTV && hasPhone) d = -5000; else if (hasTV) d = -3000; else if (hasPhone) d = -2000; }
                             }
