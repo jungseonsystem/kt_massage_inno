@@ -6,7 +6,6 @@
     <title>KT 기업상품 견적 시스템 - 최종보정완료</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* [1] 기존 인터페이스 스타일 (실장님 원본 100% 유지) */
         body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f7f9; color: #333; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
         #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .auth-box { background: white; padding: 35px; border-radius: 15px; text-align: center; border-top: 6px solid #E4002B; width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
@@ -163,7 +162,7 @@
 </div>
 
 <script>
-    // [실장님 416줄 원본 데이터 및 로직 100% 유지]
+    // [실장님 원본 데이터 100% 보존]
     const prodData = {
         "인터넷 _슬림(100MB)": { before: 22000, comm: 10000 },
         "인터넷 _슬림플러스(200MB)": { before: 27500, comm: 30000 },
@@ -179,17 +178,10 @@
         "패밀리 인터넷 에센스": { before: 35000, final: 25000, comm: 10000 },
         "신규(070회선)": { comm: 30000 }, "타사탈환(종량제)": { comm: 40000 }, "자사번동": { comm: 0 }, "원스톱전환신규": { comm: 80000 },
         "종량제": { final: 3000, comm: 0 },
-        "유무선 30": { final: 4000, comm: 10000 },
-        "유무선 50": { final: 5000, comm: 10000 },
-        "유무선 70": { final: 6000, comm: 70000 },
-        "유무선 100": { final: 8000, comm: 90000 },
-        "유무선 150": { final: 10000, comm: 90000 },
-        "유무선 250": { final: 12000, comm: 100000 },
-        "유무선 300": { final: 15000, comm: 100000 },
-        "유무선 400": { final: 17000, comm: 100000 },
-        "유무선 550": { final: 22000, comm: 120000 },
-        "유무선 600": { final: 30000, comm: 120000 },
-        "유무선 1700": { final: 50000, comm: 120000 },
+        "유무선 30": { final: 4000, comm: 10000 }, "유무선 50": { final: 5000, comm: 10000 }, "유무선 70": { final: 6000, comm: 70000 },
+        "유무선 100": { final: 8000, comm: 90000 }, "유무선 150": { final: 10000, comm: 90000 }, "유무선 250": { final: 12000, comm: 100000 },
+        "유무선 300": { final: 15000, comm: 100000 }, "유무선 400": { final: 17000, comm: 100000 }, "유무선 550": { final: 22000, comm: 120000 },
+        "유무선 600": { final: 30000, comm: 120000 }, "유무선 1700": { final: 50000, comm: 120000 },
         "지니 TV 베이직": { before: 14000, disc: 0, final: 14000, comm: 10000 },
         "지니 TV 베이직 추가회선": { before: 6700, final: 6700, comm: 10000 },
         "지니 TV 에센스": { before: 17000, disc: -4000, final: 13000, comm: 30000 },
@@ -206,12 +198,11 @@
         "BIZTV_베이직_추가회선": { before: 10700, disc: -4000, final: 6700, comm: 160000 },
         "BIZTV_라이트↑": { before: 16000, disc: -4000, final: 12000, comm: 180000 },
         "BIZTV_라이트↑_추가회선": { before: 11200, disc: -4000, final: 7200, comm: 180000 },
-        "통화매니저": { final: 4000, comm: 0 },
-        "통화매니저 녹취": { final: 6000, comm: 0 },
-        "링고비즈": { final: 2000, comm: 0 },
-        "전국대표번호": { final: 14000, comm: 0 },
-        "ars": { final: 10000, comm: 0 }
+        "통화매니저": { final: 4000, comm: 0 }, "통화매니저 녹취": { final: 6000, comm: 0 }, "링고비즈": { final: 2000, comm: 0 }, "전국대표번호": { final: 14000, comm: 0 }, "ars": { final: 10000, comm: 0 }
     };
+
+    // [지시사항] CCTV 대수별 요금 테이블
+    const cctvPrices = { 1: 12000, 2: 22000, 3: 32000, 4: 39000, 5: 46000, 6: 53000, 7: 60000, 8: 67000 };
 
     const cats = {
         "인터넷/오피스넷": ["인터넷 _슬림(100MB)", "인터넷 _슬림플러스(200MB)", "인터넷 _베이직(500MB)", "인터넷 _에센스(1GB)", "오피스넷 _슬림(100MB)", "오피스넷 _베이직(500MB)", "오피스넷 _에센스(1GB)", "KT Giga WIFI", "KT WIFI"],
@@ -221,6 +212,7 @@
         "TV": ["지니 TV 베이직", "지니 TV 베이직 추가회선", "지니 TV 에센스", "지니 TV 에센스 추가회선", "지니 TV 모든G", "지니 TV 모든G 추가회선", "지니 a stb"],
         "TV BIZ": ["BIZTV_슬림", "BIZTV_슬림_추가회선", "BIZTV_베이직", "BIZTV_베이직_추가회선", "BIZTV_라이트↑", "BIZTV_라이트↑_추가회선"],
         "고정아이피": ["오피스에센스 고정IP", "오피스베이직 고정IP", "오피스슬림 고정IP"],
+        "CCTV": ["지능형 CCTV"], // [지시사항] 위치 고수
         "부가서비스": ["통화매니저", "통화매니저 녹취", "링고비즈", "전국대표번호", "ars"]
     };
 
@@ -258,7 +250,7 @@
         document.querySelectorAll(`.item-card[data-cat="${cN}"] .note`).forEach(n => n.value='');
         updateTable();
     }
-    function qty(btn, d) { let inp = btn.parentElement.querySelector('input'); let v = parseInt(inp.value) + d; if(v<0)v=0; inp.value = v; updateTable(); }
+    function qty(btn, d) { let inp = btn.parentElement.querySelector('input'); let v = parseInt(inp.value) + d; if(v<0)v=0; if(inp.dataset.name === "지능형 CCTV" && v > 8) v = 8; inp.value = v; updateTable(); }
     function addToCart(name, btn) { let qIn = btn.parentElement.querySelector('.qty-input-phone'); let q = parseInt(qIn.value); let p = btn.closest('.item-card').querySelector('input[name="p_'+name+'"]:checked').value; if(q > 0) { cart.push({ name, qty: q, phone: p }); qIn.value = 0; updateTable(); } }
     
     function sync() { 
@@ -290,18 +282,26 @@
             document.querySelectorAll('.item-card').forEach(card => {
                 let inp = card.querySelector('input[data-name]');
                 if(inp && cats[c].includes(inp.dataset.name)) {
-                    let q = parseInt(inp.value), name = inp.dataset.name, note = card.querySelector('.note')?.value || '', data = prodData[name];
+                    let q = parseInt(inp.value), name = inp.dataset.name, note = card.querySelector('.note')?.value || '';
                     if(q > 0) {
-                        totalComm += (data.comm || 0) * q;
-                        let b = data.before || data.final || 0, d = data.disc || 0;
-                        if(name === "지니 TV 베이직") { b = 14000; d = 0; } 
-                        else if(name === "KT WIFI") { b = 3000; d = -2000; }
-                        else if(name === "KT Giga WIFI") { b = 3000; d = -3000; }
-                        else if(c === "인터넷/오피스넷" || c === "패밀리 인터넷") {
-                            if (name.includes("100MB")) { if (hasPhone) d = -2000; }
-                            else { if (hasTV && hasPhone) d = -5000; else if (hasTV) d = -3000; else if (hasPhone) d = -2000; }
+                        let b = 0, d = 0, rs = 0;
+                        if(c === "CCTV") {
+                            // [지시사항] CCTV 구간 요금제 적용
+                            rs = cctvPrices[q] || 0; b = rs; d = 0;
+                        } else {
+                            let data = prodData[name];
+                            totalComm += (data.comm || 0) * q;
+                            b = data.before || data.final || 0; d = data.disc || 0;
+                            if(name === "지니 TV 베이직") { b = 14000; d = 0; } 
+                            else if(name === "KT WIFI") { b = 3000; d = -2000; }
+                            else if(name === "KT Giga WIFI") { b = 3000; d = -3000; }
+                            else if(c === "인터넷/오피스넷" || c === "패밀리 인터넷") {
+                                if (name.includes("100MB")) { if (hasPhone) d = -2000; }
+                                else { if (hasTV && hasPhone) d = -5000; else if (hasTV) d = -3000; else if (hasPhone) d = -2000; }
+                            }
+                            rs = (b + d) * q;
                         }
-                        let rs = (b + d) * q; totalSum += rs;
+                        totalSum += rs;
                         body.innerHTML += `<tr><td>${no++}</td><td style="text-align:left;">${name}</td><td>${q}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${rs.toLocaleString()}</td><td>${note}</td></tr>`;
                     }
                 }
@@ -313,11 +313,8 @@
                     let pay = (data.final + extra) * item.qty;
                     let b = (item.name === "종량제") ? (data.final + extra) : (pay + 2000);
                     let d = (item.name === "종량제") ? 0 : -2000;
-                    
-                    /* [지시사항] 유무선 70 비고란 폰트 조절하여 2줄 유지 */
                     let note70 = "";
                     if(item.name === "유무선 70") note70 = "<div style='font-size:10px; line-height:1.2;'>70분 무료통화<br>키폰 무료</div>";
-
                     totalSum += pay;
                     body.innerHTML += `<tr><td>${no++}</td><td style="text-align:left;">${item.name}(${item.phone})</td><td>${item.qty}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${pay.toLocaleString()}</td><td>${note70}</td></tr>`;
                 });
@@ -336,17 +333,14 @@
         const wrapper = document.getElementById('printWrapper');
         const currentTransform = wrapper.style.transform;
         const managerPhone = document.getElementById('in_manager').value;
-
         wrapper.style.transform = "none";
         await document.fonts.ready;
         const canvas = await html2canvas(area, { scale: 3, useCORS: true, backgroundColor: "#ffffff" });
         wrapper.style.transform = currentTransform;
-
         const link = document.createElement('a');
         link.href = canvas.toDataURL("image/png", 1.0);
         link.download = `KT_견적서_${document.getElementById('in_client').value || 'KT'}.png`;
         link.click();
-
         canvas.toBlob(async (blob) => {
             const item = new ClipboardItem({ "image/png": blob });
             await navigator.clipboard.write([item]);
