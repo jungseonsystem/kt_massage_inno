@@ -51,7 +51,6 @@
         .greeting-text { font-size: 14px; line-height: 1.8; margin-bottom: 15px; white-space: pre-wrap; word-break: keep-all; }
         .highlight-blue { color: #0078D4; text-decoration: underline; font-weight: bold; }
 
-        /* [지시사항] 강조 문구 스타일 보존 및 수정된 내용 반영 예정 */
         .gift-highlight { border: 2.5px solid #E4002B; background-color: #FFFF00; color: #E4002B; padding: 12px; font-size: 17px; font-weight: 900; text-align: center; margin-bottom: 15px; letter-spacing: -0.5px; }
 
         .main-table { width: 100%; border-collapse: collapse; border: 1.2px solid #000; table-layout: fixed; position: relative; z-index: 2; }
@@ -315,9 +314,9 @@
                     let b = (item.name === "종량제") ? (data.final + extra) : (pay + 2000);
                     let d = (item.name === "종량제") ? 0 : -2000;
                     
-                    /* [지시사항 반영] 유무선 70 선택 시 자동 비고 입력 */
+                    /* [지시사항] 유무선 70 비고란 폰트 조절하여 2줄 유지 */
                     let note70 = "";
-                    if(item.name === "유무선 70") note70 = "70분 무료통화<br>키폰 무료";
+                    if(item.name === "유무선 70") note70 = "<div style='font-size:10px; line-height:1.2;'>70분 무료통화<br>키폰 무료</div>";
 
                     totalSum += pay;
                     body.innerHTML += `<tr><td>${no++}</td><td style="text-align:left;">${item.name}(${item.phone})</td><td>${item.qty}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${pay.toLocaleString()}</td><td>${note70}</td></tr>`;
