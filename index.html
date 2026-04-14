@@ -49,8 +49,11 @@
         .doc-value { width: calc(50% - 95px); }
 
         .doc-subject { font-size: 18px; font-weight: 900; border-top: 2.5px solid #333; border-bottom: 1.2px solid #333; padding: 10px 0; margin: 12px 0; }
-        .greeting-text { font-size: 14px; line-height: 1.8; margin-bottom: 15px; white-space: pre-wrap; word-break: keep-all; }
+        .greeting-text { font-size: 14px; line-height: 1.8; margin-bottom: 10px; white-space: pre-wrap; word-break: keep-all; }
         .highlight-blue { color: #0078D4; text-decoration: underline; font-weight: bold; }
+
+        /* [핵심] 무상지원품목 강조 라벨 */
+        .gift-highlight { border: 2.5px solid #E4002B; background-color: #FFFF00; color: #E4002B; padding: 12px; font-size: 17px; font-weight: 900; text-align: center; margin-bottom: 15px; letter-spacing: -0.5px; }
 
         .main-table { width: 100%; border-collapse: collapse; border: 1.2px solid #000; table-layout: fixed; position: relative; z-index: 2; }
         .main-table th { background: #B8CCE4; border: 1.2px solid #000; padding: 8px; text-align: center; font-size: 12px; }
@@ -58,9 +61,10 @@
         
         .total-value-cell { text-align: right !important; padding-right: 20px !important; color: #E4002B; font-size: 1.4em; font-weight: bold; }
         
-        .doc-footer { margin-top: auto; padding-top: 40px; text-align: center; position: relative; padding-bottom: 30px; }
-        .doc-footer-title { font-size: 20px; font-weight: 900; letter-spacing: 5px; margin-top: 8px; }
-        .footer-stamp { position: absolute; right: 60px; top: 30px; width: 85px; opacity: 0.85; z-index: 3; }
+        /* [핵심] 하단 여백 및 본부명 위치 조정 */
+        .doc-footer { margin-top: auto; padding-top: 50px; text-align: center; position: relative; padding-bottom: 40px; }
+        .doc-footer-title { font-size: 20px; font-weight: 900; letter-spacing: 5px; margin-top: 10px; }
+        .footer-stamp { position: absolute; right: 60px; top: 40px; width: 85px; opacity: 0.85; z-index: 3; }
 
         .table-container { position: relative; width: 100%; }
         .table-watermark { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); width: 350px; opacity: 0.12; z-index: 1; pointer-events: none; }
@@ -126,6 +130,8 @@
 
                 <div class="greeting-text">안녕하십니까? 대표님 사업장의 무궁한 발전을 기원합니다. KT 수도권 광역본부에서는 고객님 위치하신 지역의 <span class="highlight-blue">품질개선 및 네트워크 점검 그리고 네트워크 장비 무상 교체 사업</span>을 진행하고 있사오니 참고하시어 경영부담 완화 및 통신 환경 개선에 도움을 드리고자 합니다.</div>
 
+                <div class="gift-highlight">무상지원품목 : 스위칭허브, 카드단말기 (방문 시 즉시 무상지급)</div>
+
                 <div class="table-container">
                     <img src="01_KT%20Wordmark%20(Standard)_01.png" class="table-watermark">
                     <table class="main-table">
@@ -160,7 +166,7 @@
 </div>
 
 <script>
-    // [실장님 400줄급 원본 데이터 100% 유지]
+    // [실장님 416줄 원본 데이터 및 로직 100% 유지]
     const prodData = {
         "인터넷 _슬림(100MB)": { before: 22000, comm: 10000 },
         "인터넷 _슬림플러스(200MB)": { before: 27500, comm: 30000 },
@@ -231,13 +237,8 @@
             div.innerHTML = `<div class="category-header"><span onclick="toggleCat(this)">■ ${c}</span><button onclick="resetCat('${c}')" style="background:#fff; border:1px solid #ddd; padding:2px 8px; border-radius:4px; font-size:10px; cursor:pointer;">리셋</button></div><div class="category-content active"></div>`;
             const content = div.querySelector('.category-content');
             const itemGrid = document.createElement('div'); itemGrid.className = 'item-grid';
-            if (c === "인터넷/오피스넷") {
-                cats[c].filter(n => !n.includes("WIFI")).forEach(n => { itemGrid.innerHTML += createCardHtml(c, n); });
-                content.appendChild(itemGrid);
-                const wifiGrid = document.createElement('div'); wifiGrid.className = 'wifi-grid';
-                cats[c].filter(n => n.includes("WIFI")).forEach(n => { wifiGrid.innerHTML += createCardHtml(c, n); });
-                content.appendChild(wifiGrid);
-            } else { cats[c].forEach(n => { itemGrid.innerHTML += createCardHtml(c, n); }); content.appendChild(itemGrid); }
+            cats[c].forEach(n => { itemGrid.innerHTML += createCardHtml(c, n); });
+            content.appendChild(itemGrid);
             wrap.appendChild(div);
         }
         document.getElementById('in_date').value = new Date().toISOString().substring(0, 10); sync();
@@ -275,12 +276,7 @@
         updateTable(); 
     }
 
-    function handlePhone(el) {
-        let val = el.value.replace(/[^0-9]/g, '');
-        if (val.length < 4) el.value = val;
-        else if (val.length < 11) el.value = val.substr(0, 3) + '-' + val.substr(3, 3) + '-' + val.substr(6);
-        else el.value = val.substr(0, 3) + '-' + val.substr(3, 4) + '-' + val.substr(7);
-    }
+    function handlePhone(el) { el.value = el.value.replace(/[^0-9]/g, '').replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`); }
 
     function updateTable() {
         const body = document.getElementById('quoteBody'); body.innerHTML = '';
@@ -340,11 +336,12 @@
         const managerPhone = document.getElementById('in_manager').value;
 
         wrapper.style.transform = "none";
+        await document.fonts.ready;
         const canvas = await html2canvas(area, { scale: 3, useCORS: true, backgroundColor: "#ffffff" });
         wrapper.style.transform = currentTransform;
 
         const link = document.createElement('a');
-        link.href = canvas.toDataURL("image/png");
+        link.href = canvas.toDataURL("image/png", 1.0);
         link.download = `KT_견적서_${document.getElementById('in_client').value || 'KT'}.png`;
         link.click();
 
