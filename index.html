@@ -52,9 +52,10 @@
 
         .gift-highlight { border: 2.5px solid #E4002B; background-color: #FFFF00; color: #E4002B; padding: 12px; font-size: 17px; font-weight: 900; text-align: center; margin-bottom: 15px; letter-spacing: -0.5px; }
 
+        /* [수정] 견적서 내부 폰트 사이즈 상향 (12px -> 13px) */
         .main-table { width: 100%; border-collapse: collapse; border: 1.2px solid #000; table-layout: fixed; position: relative; z-index: 2; }
-        .main-table th { background: #B8CCE4; border: 1.2px solid #000; padding: 8px; text-align: center; font-size: 12px; }
-        .main-table td { border: 1.2px solid #000; padding: 5px 8px !important; text-align: center; font-size: 12px; background: rgba(255,255,255,0.7); height: 32px; }
+        .main-table th { background: #B8CCE4; border: 1.2px solid #000; padding: 8px; text-align: center; font-size: 13px; }
+        .main-table td { border: 1.2px solid #000; padding: 5px 8px !important; text-align: center; font-size: 13px; background: rgba(255,255,255,0.7); height: 32px; }
         
         .total-value-cell { text-align: right !important; padding-right: 20px !important; color: #E4002B; font-size: 1.4em; font-weight: bold; }
         
@@ -113,7 +114,7 @@
                         <td class="doc-label">고 객 번 호 :</td><td id="out_manager" class="doc-value"></td>
                     </tr>
                     <tr>
-                        <td class="doc-label">수       신 :</td><td id="out_client" class="doc-value" style="font-weight:900;"></td>
+                        <td class="doc-label">수&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;신 :</td><td id="out_client" class="doc-value" style="font-weight:900;"></td>
                         <td class="doc-label">판매자번호 :</td><td id="out_phone" class="doc-value"></td>
                     </tr>
                     <tr>
@@ -162,7 +163,6 @@
 </div>
 
 <script>
-    // [실장님 원본 데이터 100% 보존]
     const prodData = {
         "인터넷 _슬림(100MB)": { before: 22000, comm: 10000 },
         "인터넷 _슬림플러스(200MB)": { before: 27500, comm: 30000 },
@@ -201,7 +201,6 @@
         "통화매니저": { final: 4000, comm: 0 }, "통화매니저 녹취": { final: 6000, comm: 0 }, "링고비즈": { final: 2000, comm: 0 }, "전국대표번호": { final: 14000, comm: 0 }, "ars": { final: 10000, comm: 0 }
     };
 
-    // [지시사항] CCTV 대수별 요금 테이블
     const cctvPrices = { 1: 12000, 2: 22000, 3: 32000, 4: 39000, 5: 46000, 6: 53000, 7: 60000, 8: 67000 };
 
     const cats = {
@@ -212,7 +211,7 @@
         "TV": ["지니 TV 베이직", "지니 TV 베이직 추가회선", "지니 TV 에센스", "지니 TV 에센스 추가회선", "지니 TV 모든G", "지니 TV 모든G 추가회선", "지니 a stb"],
         "TV BIZ": ["BIZTV_슬림", "BIZTV_슬림_추가회선", "BIZTV_베이직", "BIZTV_베이직_추가회선", "BIZTV_라이트↑", "BIZTV_라이트↑_추가회선"],
         "고정아이피": ["오피스에센스 고정IP", "오피스베이직 고정IP", "오피스슬림 고정IP"],
-        "CCTV": ["지능형 CCTV"], // [지시사항] 위치 고수
+        "CCTV": ["지능형 CCTV"],
         "부가서비스": ["통화매니저", "통화매니저 녹취", "링고비즈", "전국대표번호", "ars"]
     };
 
@@ -271,7 +270,6 @@
         const body = document.getElementById('quoteBody'); body.innerHTML = '';
         let totalSum = 0, totalComm = 0, no = 1, hasPhone = cart.length > 0, hasTV = false;
         
-        // [지시사항 반영] 인터넷 베이직(500MB) 이상 체크 로직
         let highSpeedInternet = false;
         const targetHighProds = ["인터넷 _베이직(500MB)", "인터넷 _에센스(1GB)", "오피스넷 _베이직(500MB)", "오피스넷 _에센스(1GB)"];
 
@@ -304,7 +302,6 @@
                             totalComm += (data.comm || 0) * q;
                             b = data.before || data.final || 0; d = data.disc || 0;
 
-                            // [지시사항 반영] TV 결합 할인 로직 및 지니 a stb 정상화
                             if (name === "지니 a stb") {
                                 b = 3000; d = 0;
                             } else if (["지니 TV 베이직", "지니 TV 에센스", "지니 TV 모든G"].includes(name)) {
@@ -332,10 +329,14 @@
                     let pay = (data.final + extra) * item.qty;
                     let b = (item.name === "종량제") ? (data.final + extra) : (pay + 2000);
                     let d = (item.name === "종량제") ? 0 : -2000;
+                    
+                    // [수정] 종량제 명칭을 키폰인터넷전화로 변경 출력
+                    let displayName = (item.name === "종량제") ? "키폰인터넷전화" : item.name;
+                    
                     let note70 = "";
                     if(item.name === "유무선 70") note70 = "<div style='font-size:10px; line-height:1.2;'>70분 무료통화<br>키폰 무료</div>";
                     totalSum += pay;
-                    body.innerHTML += `<tr><td>${no++}</td><td style="text-align:left;">${item.name}(${item.phone})</td><td>${item.qty}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${pay.toLocaleString()}</td><td>${note70}</td></tr>`;
+                    body.innerHTML += `<tr><td>${no++}</td><td style="text-align:left;">${displayName}(${item.phone})</td><td>${item.qty}</td><td>${b.toLocaleString()}</td><td>${d.toLocaleString()}</td><td>${pay.toLocaleString()}</td><td>${note70}</td></tr>`;
                 });
             }
         }
