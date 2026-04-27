@@ -52,7 +52,6 @@
 
         .gift-highlight { border: 2.5px solid #E4002B; background-color: #FFFF00; color: #E4002B; padding: 12px; font-size: 17px; font-weight: 900; text-align: center; margin-bottom: 15px; letter-spacing: -0.5px; }
 
-        /* [수정] 견적서 내부 폰트 사이즈 상향 (12px -> 13px) */
         .main-table { width: 100%; border-collapse: collapse; border: 1.2px solid #000; table-layout: fixed; position: relative; z-index: 2; }
         .main-table th { background: #B8CCE4; border: 1.2px solid #000; padding: 8px; text-align: center; font-size: 13px; }
         .main-table td { border: 1.2px solid #000; padding: 5px 8px !important; text-align: center; font-size: 13px; background: rgba(255,255,255,0.7); height: 32px; }
@@ -111,7 +110,7 @@
                 <table class="doc-info-table">
                     <tr>
                         <td class="doc-label">시행일자 :</td><td id="out_date_range" class="doc-value"></td>
-                        <td class="doc-label">고 객 번 호 :</td><td id="out_manager" class="doc-value"></td>
+                        <td class="doc-label">고 고객 번 호 :</td><td id="out_manager" class="doc-value"></td>
                     </tr>
                     <tr>
                         <td class="doc-label">수&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;신 :</td><td id="out_client" class="doc-value" style="font-weight:900;"></td>
@@ -164,6 +163,7 @@
 
 <script>
     const prodData = {
+        "1port팩스": { final: 2000, comm: 0 },
         "인터넷 _슬림(100MB)": { before: 22000, comm: 10000 },
         "인터넷 _슬림플러스(200MB)": { before: 27500, comm: 30000 },
         "인터넷 _베이직(500MB)": { before: 30000, comm: 80000 },
@@ -207,7 +207,7 @@
         "인터넷/오피스넷": ["인터넷 _슬림(100MB)", "인터넷 _슬림플러스(200MB)", "인터넷 _베이직(500MB)", "인터넷 _에센스(1GB)", "오피스넷 _슬림(100MB)", "오피스넷 _베이직(500MB)", "오피스넷 _에센스(1GB)", "KT Giga WIFI", "KT WIFI"],
         "패밀리 인터넷": ["패밀리 인터넷 슬림", "패밀리 인터넷 베이직", "패밀리 인터넷 에센스"],
         "가입유형": ["신규(070회선)", "타사탈환(종량제)", "자사번동", "원스톱전환신규"],
-        "전화 요금제": ["종량제", "유무선 30", "유무선 50", "유무선 70", "유무선 100", "유무선 150", "유무선 250", "유무선 300", "유무선 400", "유무선 550", "유무선 600", "유무선 1700"],
+        "전화 요금제": ["1port팩스", "종량제", "유무선 30", "유무선 50", "유무선 70", "유무선 100", "유무선 150", "유무선 250", "유무선 300", "유무선 400", "유무선 550", "유무선 600", "유무선 1700"],
         "TV": ["지니 TV 베이직", "지니 TV 베이직 추가회선", "지니 TV 에센스", "지니 TV 에센스 추가회선", "지니 TV 모든G", "지니 TV 모든G 추가회선", "지니 a stb"],
         "TV BIZ": ["BIZTV_슬림", "BIZTV_슬림_추가회선", "BIZTV_베이직", "BIZTV_베이직_추가회선", "BIZTV_라이트↑", "BIZTV_라이트↑_추가회선"],
         "고정아이피": ["오피스에센스 고정IP", "오피스베이직 고정IP", "오피스슬림 고정IP"],
@@ -325,12 +325,22 @@
             if(c === "전화 요금제") {
                 cart.forEach(item => {
                     let data = prodData[item.name]; totalComm += (data.comm || 0) * item.qty;
-                    let extra = (item.name === "종량제" || ["유무선 30", "유무선 50"].includes(item.name)) ? ((item.phone === "100M") ? 500 : 800) : 0;
-                    let pay = (data.final + extra) * item.qty;
-                    let b = (item.name === "종량제") ? (data.final + extra) : (pay + 2000);
-                    let d = (item.name === "종량제") ? 0 : -2000;
+                    let extra = 0;
+                    let pay = 0;
+                    let b = 0;
+                    let d = 0;
+
+                    if (item.name === "1port팩스") {
+                        pay = data.final * item.qty;
+                        b = data.final;
+                        d = 0;
+                    } else {
+                        extra = (item.name === "종량제" || ["유무선 30", "유무선 50"].includes(item.name)) ? ((item.phone === "100M") ? 500 : 800) : 0;
+                        pay = (data.final + extra) * item.qty;
+                        b = (item.name === "종량제") ? (data.final + extra) : (pay + 2000);
+                        d = (item.name === "종량제") ? 0 : -2000;
+                    }
                     
-                    // [수정] 종량제 명칭을 키폰인터넷전화로 변경 출력
                     let displayName = (item.name === "종량제") ? "키폰인터넷전화" : item.name;
                     
                     let note70 = "";
